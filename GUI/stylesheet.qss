@@ -1,0 +1,89 @@
+QMainWindow {
+    background-color: black;
+}
+
+QFrame#controls_bar {
+    background-color: #1A1A1A;
+}
+
+
+QFrame#chat_frame {
+    background-color: white;
+    color: black;
+}
+QLabel#chat_title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QComboBox#recipient_combo_box {
+    background-color: #F2F2F7;
+    border-radius: 5px;
+}
+QComboBox#recipient_combo_box:hover {
+    background-color: #E7F1FD;
+    color: #6271EE;
+}
+QComboBox#recipient_combo_box:pressed {
+    background-color: #D7E6F8;
+    color: #6271EE;
+}
+
+
+QLineEdit#chat_input {
+    border: none;
+}
+
+
+ToggleWidget QLabel {
+    color: #A8A8A8;
+    font-size: 12px;
+}
+ToggleWidget:hover {
+    background-color: #2E2E2E;
+}
+/*ToggleWidget:pressed {
+    background-color: #434343;
+}*/
+
+
+ClientVideoWidget {
+    background-color: #1A1A1A;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+}
+/* Matches all instances of QFrame that are descendants of a ClientVideoWidget. */
+ClientVideoWidget QFrame {
+    background-color: rgba(42, 42, 42, 150); /* r, g , b, alpha (the opacity) */
+    color: white;
+}
+
+
+/*
+MsgWidget {
+    background-color: cyan;
+}
+*/
+
+QWidget#messages_widget {
+    background-color: white;
+}
+
+
+
+QPushButton#leave_button {
+    background-color: #B72525;
+    color: white;
+    border-radius: 5px;
+}
+QPushButton#leave_button:hover {
+    background-color: #DE2828;
+}
+QPushButton#leave_button:pressed {
+    background-color: #B72525;
+}
+
+SmartBoardToolbar {
+    background-color: #F0F0F0;
+}
