@@ -62,6 +62,7 @@ class InfoServer(BroadcastServer):
 
     def handle_new_data(self, par: Participant, data: bytes):
         """
+        Handles new data received from a given participant.
         """
         msg_name, msg_data = pickle.loads(data)
         if msg_name == Info.TOGGLE_AUDIO:

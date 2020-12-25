@@ -36,13 +36,20 @@ class Info:
     NEW_CLIENT           , (client_id: bytes, client_name: str, is_audio_on: bool, is_video_on: bool)
     CLIENTS_INFO         , [(client_id: bytes, client_name: str, is_audio_on: bool, is_video_on: bool),...]
     CLIENT_LEFT          , client_id: bytes
+
     TOGGLE_AUDIO         , client_id: bytes
     TOGGLE_VIDEO         , client_id: bytes
+
     START_SCREEN_SHARING , client_id: bytes
     STOP_SCREEN_SHARING  , client_id: bytes
+
     START_PAINTING       , client_id: bytes
     STOP_PAINTING        , client_id: bytes
     NEW_PAINTING         , Painting(...)
+
+    START_REMOTE_WINDOW  , client_id: bytes
+    STOP_REMOTE_WINDOW   , client_id: bytes
+    REMOTE_WINDOW_MSG    , RemoteWindowMsg(...)
     """
     NEW_CLIENT = 1
     CLIENTS_INFO = 2
@@ -58,3 +65,6 @@ class Info:
     STOP_PAINTING = 9
     NEW_PAINTING = 10
 
+    START_REMOTE_WINDOW = 11
+    STOP_REMOTE_WINDOW = 12
+    REMOTE_WINDOW_MSG = 13

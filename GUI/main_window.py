@@ -13,6 +13,8 @@ import threading
 sys.path.insert(0, '..')
 
 from constants import *
+from GUI.gui_constants import *
+
 from GUI.ui_main_window import Ui_MainWindow
 from GUI.widgets.video_grid import VideoGrid
 from GUI.widgets.smart_board import SmartBoard
@@ -27,35 +29,9 @@ from client.video.video_client import VideoClient
 from client.video.share_screen_client import ShareScreenClient
 from client.audio.audio_client import AudioClient
 from client.chat_client import ChatClient
+
 from chat_msg import ChatMsg
-
-STYLE_SHEET_PATH = 'stylesheet.qss'
-PATH_TO_IMAGES = 'images'
-TOGGLE_AUDIO_DICT = {
-    True: ('Mute', f'{PATH_TO_IMAGES}/open_mic.png'),
-    False: ('Unmute', f'{PATH_TO_IMAGES}/closed_mic.png')
-}
-TOGGLE_VIDEO_DICT = {
-    True: ('Stop Video', f'{PATH_TO_IMAGES}/open_camera.png'),
-    False: ('Start Video', f'{PATH_TO_IMAGES}/closed_camera.png')
-}
-
-TOGGLE_CHAT_PROPERTIES = ('Chat', f'{PATH_TO_IMAGES}/chat_icon.png')
-# the chat widget looks the same when it's on/off
-TOGGLE_CHAT_DICT = {
-    True: TOGGLE_CHAT_PROPERTIES,
-    False: TOGGLE_CHAT_PROPERTIES
-}
-
-TOGGLE_SHARE_SCREEN_DICT = {
-    True: ('Stop Share', f'{PATH_TO_IMAGES}/stop_icon.png'),
-    False: ('Share Screen', f'{PATH_TO_IMAGES}/share_screen_icon.png')
-}
-
-TOGGLE_SMART_BOARD_DICT = {
-    True: ('Close Board', f'{PATH_TO_IMAGES}/stop_icon.png'),
-    False: ('Smart Board', f'{PATH_TO_IMAGES}/board_icon.png')
-}
+from win32.remote_notepad import RemoteNotepad
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -74,9 +50,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.create_controls_bar()
         self.create_video_grid()
+        self.init_chat()
         self.create_shared_screen()
         self.create_smart_board()
-        self.init_chat()
+        self.init_remote_window()
 
         # {client_id: ClientVideoWidget(...)}
         self.video_widgets: [bytes, ClientVideoWidget] = {}
@@ -165,11 +142,18 @@ class MainWindow(QtWidgets.QMainWindow):
         elif msg_name == Info.START_PAINTING:
             self.ui.smart_board.show()
         elif msg_name == Info.STOP_PAINTING:
-            self.ui.smart_board.clear()
             self.ui.smart_board.hide()
 
         elif msg_name == Info.NEW_PAINTING:
             self.ui.smart_board.draw_painting(msg_data)
+
+        elif msg_name == Info.START_REMOTE_WINDOW:
+            self.remote_window.create_window()
+            self.remote_window.start()
+        elif msg_name == Info.STOP_REMOTE_WINDOW:
+            self.remote_window.close()
+        elif msg_name == Info.REMOTE_WINDOW_MSG:
+            self.remote_window.handle_new_msg(msg_data)
 
     def create_controls_bar(self):
         """ Creates the controls bar. """
@@ -205,40 +189,49 @@ class MainWindow(QtWidgets.QMainWindow):
     def create_toggles(self):
         """
         Creates the toggle widgets for
-        audio, video, chat, share screen.
+        audio, video, chat, share screen, smart board and remote window.
         """
         self.ui.toggle_audio_widget = \
             ToggleWidget(self.ui.controls_bar, TOGGLE_AUDIO_DICT,
                          is_on=self.is_audio_on)
         self.ui.toggle_audio_widget.clicked.connect(self.toggle_audio)
-        self.ui.controls_bar_layout.addWidget(self.ui.toggle_audio_widget)
 
         self.ui.toggle_video_widget = \
             ToggleWidget(self.ui.controls_bar, TOGGLE_VIDEO_DICT,
                          is_on=self.is_video_on)
         self.ui.toggle_video_widget.clicked.connect(self.toggle_video)
-        self.ui.controls_bar_layout.addWidget(self.ui.toggle_video_widget)
 
         self.ui.toggle_chat_widget = \
             ToggleWidget(self.ui.controls_bar, TOGGLE_CHAT_DICT, is_on=False)
         self.ui.toggle_chat_widget.clicked.connect(self.toggle_chat)
-        self.ui.controls_bar_layout.addWidget(self.ui.toggle_chat_widget)
 
         self.ui.toggle_share_screen_widget = \
             ToggleWidget(self.ui.controls_bar, TOGGLE_SHARE_SCREEN_DICT,
                          is_on=False, toggle_onclick=False)
         self.ui.toggle_share_screen_widget. \
             clicked.connect(self.toggle_share_screen)
-        self.ui.controls_bar_layout.addWidget(
-            self.ui.toggle_share_screen_widget)
 
         self.ui.toggle_smart_board_widget = \
             ToggleWidget(self.ui.controls_bar, TOGGLE_SMART_BOARD_DICT,
                          is_on=False, toggle_onclick=False)
-        self.ui.toggle_smart_board_widget.clicked.connect(
-            self.toggle_smart_board)
-        self.ui.controls_bar_layout.addWidget(
-            self.ui.toggle_smart_board_widget)
+        self.ui.toggle_smart_board_widget.clicked. \
+            connect(self.toggle_smart_board)
+
+        self.ui.toggle_remote_window_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_REMOTE_WINDOW_DICT,
+                         is_on=False, toggle_onclick=False)
+        self.ui.toggle_remote_window_widget.clicked. \
+            connect(self.toggle_remote_window)
+
+        # add all the toggle widgets to the controls bar layout
+        widgets = (self.ui.toggle_audio_widget,
+                   self.ui.toggle_video_widget,
+                   self.ui.toggle_chat_widget,
+                   self.ui.toggle_share_screen_widget,
+                   self.ui.toggle_smart_board_widget,
+                   self.ui.toggle_remote_window_widget)
+        for widget in widgets:
+            self.ui.controls_bar_layout.addWidget(widget)
 
     def toggle_audio(self):
         """ Turns on/off the audio. """
@@ -370,15 +363,22 @@ class MainWindow(QtWidgets.QMainWindow):
             self.info_client.send_painting_msg)
         self.ui.smart_board.hide()
 
+    def init_remote_window(self):
+        """ Initializes the remote window. """
+        self.remote_window = RemoteNotepad()
+        self.remote_window.new_msg.connect(
+            self.info_client.send_remote_window_msg)
+
     def can_start_sharing(self) -> bool:
         """
-        Checks if can start screen sharing/painting -
+        Checks if can start screen/smart_board/remote_window sharing -
         if none of the participants is already sharing.
         """
-        # if the shared_screen/smart_board is visible,
-        # someone is already sharing
+        # if the shared_screen/smart_board is visible or
+        # the remote_window is open, someone is already sharing
         if self.ui.shared_screen.isVisible() or \
-                self.ui.smart_board.isVisible():
+                self.ui.smart_board.isVisible() or \
+                self.remote_window.is_open:
             self.show_error_msg("Can't start sharing",
                                 "A participant is already sharing.")
             return False
@@ -386,7 +386,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def can_toggle(self, widget: ToggleWidget) -> bool:
         """
-        Returns True if the screen sharing/smart board sharing widget
+        Returns True if the screen/smart_board/remote_window sharing widget
         can switch its state, False otherwise.
         """
         if widget.is_on:
@@ -395,29 +395,53 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggle_share_screen(self):
         """ Toggles the screen sharing. """
-        if self.can_toggle(self.ui.toggle_share_screen_widget):
-            if self.ui.toggle_share_screen_widget.is_on:
-                self.info_client.send_info_msg(
-                    (Info.STOP_SCREEN_SHARING, self.id))
-                self.ui.shared_screen.hide()
-            else:
-                self.info_client.send_info_msg(
-                    (Info.START_SCREEN_SHARING, self.id))
-                self.ui.shared_screen.show()
+        toggled = self.toggle_sharing(self.ui.toggle_share_screen_widget,
+                                      self.ui.shared_screen,
+                                      Info.START_SCREEN_SHARING,
+                                      Info.STOP_SCREEN_SHARING)
+        if toggled:
             self.share_screen_client.toggle_is_sharing()
-            self.ui.toggle_share_screen_widget.toggle()
 
     def toggle_smart_board(self):
         """ Toggle the smart board sharing. """
-        if self.can_toggle(self.ui.toggle_smart_board_widget):
-            if self.ui.toggle_smart_board_widget.is_on:
-                self.info_client.send_info_msg((Info.STOP_PAINTING, self.id))
-                self.ui.smart_board.clear()
-                self.ui.smart_board.hide()
+        self.toggle_sharing(self.ui.toggle_smart_board_widget,
+                            self.ui.smart_board,
+                            Info.START_PAINTING, Info.STOP_PAINTING)
+
+    def toggle_remote_window(self):
+        """ Toggles the remote window. """
+        toggled = self.toggle_sharing(self.ui.toggle_remote_window_widget,
+                                      self.ui.smart_board,  # TODO change it
+                                      Info.START_REMOTE_WINDOW,
+                                      Info.STOP_REMOTE_WINDOW)
+        if toggled:
+            if self.ui.toggle_remote_window_widget.is_on:
+                self.remote_window.create_window()
+                self.remote_window.start()
             else:
-                self.info_client.send_info_msg((Info.START_PAINTING, self.id))
-                self.ui.smart_board.show()
-            self.ui.toggle_smart_board_widget.toggle()
+                self.remote_window.close()
+
+    def toggle_sharing(self, toggle_widget: ToggleWidget,
+                       ui_widget: QtWidgets.QWidget,
+                       start_msg: int, stop_msg: int) -> bool:
+        """
+
+        :param toggle_widget:
+        :param ui_widget:
+        :param start_msg:
+        :param stop_msg:
+        :return: True if the toggle widget was toggled, False otherwise
+        """
+        if self.can_toggle(toggle_widget):
+            if toggle_widget.is_on:
+                self.info_client.send_info_msg((stop_msg, self.id))
+                ui_widget.hide()
+            else:
+                self.info_client.send_info_msg((start_msg, self.id))
+                ui_widget.show()
+            toggle_widget.toggle()
+            return True
+        return False
 
     def exit(self):
         """ Closes the clients and the gui. """

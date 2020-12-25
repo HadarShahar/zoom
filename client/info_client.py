@@ -8,19 +8,21 @@ from network_protocol import send_packet, recv_packet
 from constants import Info
 from client.basic_client import BasicClient
 from painting import Painting
+from remote_window_msg import RemoteWindowMsg
 
 
 class InfoClient(BasicClient):
-    """ definition of the class InfoClient """
+    """ Definition of the class InfoClient. """
 
     new_info = pyqtSignal(tuple)
 
     def __init__(self, ip: str, in_socket_port: int, out_socket_port: int):
-        """ constructor """
+        """ Constructor. """
         # this id is just for the BasicClient constructor,
         # it will change when the overridden method update_id() will be called.
         temporary_id = b''
-        super(InfoClient, self).__init__(ip, in_socket_port, out_socket_port, temporary_id)
+        super(InfoClient, self).__init__(ip, in_socket_port,
+                                         out_socket_port, temporary_id)
 
         self.clients_info = {}  # {client_id: client_name}
 
@@ -39,6 +41,7 @@ class InfoClient(BasicClient):
 
     def send_data_loop(self):
         """
+        Just overrides the function in BasicClient.
         """
         pass
 
@@ -77,6 +80,10 @@ class InfoClient(BasicClient):
     def send_painting_msg(self, painting: Painting):
         """ Sends a given painting message. """
         self.send_info_msg((Info.NEW_PAINTING, painting))
+
+    def send_remote_window_msg(self, msg: RemoteWindowMsg):
+        """ Sends a given remote window message. """
+        self.send_info_msg((Info.REMOTE_WINDOW_MSG, msg))
 
     def send_info_msg(self, msg: tuple):
         """ Sends a given info message. """

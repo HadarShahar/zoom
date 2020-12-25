@@ -30,7 +30,7 @@ class SmartBoard(QtWidgets.QFrame):
         self.label = QtWidgets.QLabel(self)
         self.label.setMinimumSize(BasicVideoWidget.MIN_WIDTH,
                                   BasicVideoWidget.MIN_HEIGHT)
-        # self.label.setGeometry(0, 0, self.width(), self.heisght())
+        # self.label.setGeometry(0, 0, self.width(), self.height())
         pixmap = QtGui.QPixmap(self.label.width(), self.label.height())
         pixmap.fill(QColor(self.bg_color))
         self.label.setPixmap(pixmap)
@@ -67,6 +67,11 @@ class SmartBoard(QtWidgets.QFrame):
         """ Clears the board. """
         self.label.pixmap().fill(QColor(self.bg_color))
         self.update()
+
+    def hide(self):
+        """ Hides and clears the board. """
+        super(SmartBoard, self).hide()
+        self.clear()
 
     def keyPressEvent(self, e: QKeyEvent):
         """

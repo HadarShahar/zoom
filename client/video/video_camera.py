@@ -32,7 +32,6 @@ class VideoCamera(object):
         """
         print('trying to connect to camera')
         # capture from device 0
-        # TODO maybe change that number so the camera will connect quicker
         self.cap = cv2.VideoCapture(0)
 
         if self.cap.isOpened():

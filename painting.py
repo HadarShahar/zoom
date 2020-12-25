@@ -21,6 +21,6 @@ class Painting(object):
         self.pen_color = pen_color
         self.pen_width = pen_width
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ Returns the painting attributes. """
-        return self.__dict__
+        return str(self.__dict__)

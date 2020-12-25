@@ -23,15 +23,13 @@ class MainServer(object):
         """ Initializes the servers. """
         self.info_server = InfoServer(ip, CLIENT_IN_INFO_PORT,
                                       CLIENT_OUT_INFO_PORT)
-        self.video_server = \
-            BroadcastServer(ip, CLIENT_IN_VIDEO_PORT,
-                            CLIENT_OUT_VIDEO_PORT, 'video')
-        self.share_screen_server = \
-            BroadcastServer(ip, CLIENT_IN_SCREEN_PORT,
-                            CLIENT_OUT_SCREEN_PORT, 'share_screen')
-        self.audio_server = \
-            BroadcastServer(ip, CLIENT_IN_AUDIO_PORT,
-                            CLIENT_OUT_AUDIO_PORT, 'audio')
+        self.video_server = BroadcastServer(ip, CLIENT_IN_VIDEO_PORT,
+                                            CLIENT_OUT_VIDEO_PORT, 'video')
+        self.share_screen_server = BroadcastServer(ip, CLIENT_IN_SCREEN_PORT,
+                                                   CLIENT_OUT_SCREEN_PORT,
+                                                   'share_screen')
+        self.audio_server = BroadcastServer(ip, CLIENT_IN_AUDIO_PORT,
+                                            CLIENT_OUT_AUDIO_PORT, 'audio')
         self.chat_server = ChatServer(ip, CLIENT_IN_CHAT_PORT,
                                       CLIENT_OUT_CHAT_PORT)
 

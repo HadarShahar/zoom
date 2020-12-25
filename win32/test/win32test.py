@@ -26,13 +26,6 @@ def get_hwnds_for_pid(pid):
     return hwnds
 
 
-def write_text_notepad(hwnd, text):
-    # look for the child window of class Edit - the editor
-    hwnd_edit = user32.FindWindowExW(hwnd, None, "Edit", None)
-    # write on editor
-    user32.SendMessageW(hwnd_edit, win32con.WM_SETTEXT, 0, text)
-
-
 def write_text_word(hwnd, text):
     # "listdir.exe" program
 
