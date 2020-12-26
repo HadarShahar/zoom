@@ -2,7 +2,7 @@
     Hadar Shahar
     The main app code.
 """
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt
 import numpy as np
 import sys
@@ -22,6 +22,7 @@ from GUI.widgets.basic_video_widget import BasicVideoWidget
 from GUI.widgets.client_video_widget import ClientVideoWidget
 from GUI.widgets.toggle_widget import ToggleWidget
 from GUI.widgets.msg_widget import MsgWidget
+from GUI.widgets.remote_window_container import RemoteWindowContainer
 from GUI.chat_recipients import ChatRecipients
 
 from client.info_client import InfoClient
@@ -31,7 +32,18 @@ from client.audio.audio_client import AudioClient
 from client.chat_client import ChatClient
 
 from chat_msg import ChatMsg
-from win32.remote_notepad import RemoteNotepad
+
+
+# ========================================================== important!!!
+# without it, PyQt5 immediately aborts when encountering
+# an unhandled exception, without traceback
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
+
+
+# When an exception is raised and uncaught,the interpreter calls sys.excepthook
+sys.excepthook = except_hook
+# ======================================================================
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -133,27 +145,22 @@ class MainWindow(QtWidgets.QMainWindow):
         elif msg_name == Info.CLIENT_LEFT:
             self.remove_video_widget(msg_data)
             self.chat_recipients.remove(msg_data)
-
-        elif msg_name == Info.START_SCREEN_SHARING:
-            self.ui.shared_screen.show()
-        elif msg_name == Info.STOP_SCREEN_SHARING:
-            self.ui.shared_screen.hide()
-
-        elif msg_name == Info.START_PAINTING:
-            self.ui.smart_board.show()
-        elif msg_name == Info.STOP_PAINTING:
-            self.ui.smart_board.hide()
-
         elif msg_name == Info.NEW_PAINTING:
             self.ui.smart_board.draw_painting(msg_data)
-
-        elif msg_name == Info.START_REMOTE_WINDOW:
-            self.remote_window.create_window()
-            self.remote_window.start()
-        elif msg_name == Info.STOP_REMOTE_WINDOW:
-            self.remote_window.close()
         elif msg_name == Info.REMOTE_WINDOW_MSG:
-            self.remote_window.handle_new_msg(msg_data)
+            self.ui.remote_window_container.remote_window. \
+                handle_new_msg(msg_data)
+
+        widgets_start_msgs = {
+            Info.START_SCREEN_SHARING: self.ui.shared_screen,
+            Info.START_PAINTING: self.ui.smart_board,
+            Info.START_REMOTE_WINDOW: self.ui.remote_window_container
+        }
+        for start_msg, widget in widgets_start_msgs.items():
+            if msg_name == start_msg:
+                widget.show()
+            elif msg_name == Info.OPPOSITE_MSGS[start_msg]:
+                widget.hide()
 
     def create_controls_bar(self):
         """ Creates the controls bar. """
@@ -364,24 +371,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.smart_board.hide()
 
     def init_remote_window(self):
-        """ Initializes the remote window. """
-        self.remote_window = RemoteNotepad()
-        self.remote_window.new_msg.connect(
+        """ Initializes the remote window and creates its container. """
+        # RemoteWindowContainer
+        self.ui.remote_window_container = \
+            RemoteWindowContainer(self.ui.main_vertical_splitter)
+        self.ui.remote_window_container.remote_window.new_msg.connect(
             self.info_client.send_remote_window_msg)
+        self.ui.remote_window_container.hide()
 
     def can_start_sharing(self) -> bool:
         """
         Checks if can start screen/smart_board/remote_window sharing -
         if none of the participants is already sharing.
         """
-        # if the shared_screen/smart_board is visible or
-        # the remote_window is open, someone is already sharing
-        if self.ui.shared_screen.isVisible() or \
-                self.ui.smart_board.isVisible() or \
-                self.remote_window.is_open:
-            self.show_error_msg("Can't start sharing",
-                                "A participant is already sharing.")
-            return False
+        # if one of these widgets is visible, someone is already sharing
+        widgets = (self.ui.shared_screen, self.ui.smart_board,
+                   self.ui.remote_window_container)
+        for widget in widgets:
+            if widget.isVisible():
+                self.show_error_msg("Can't start sharing",
+                                    "A participant is already sharing.")
+                return False
         return True
 
     def can_toggle(self, widget: ToggleWidget) -> bool:
@@ -410,26 +420,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggle_remote_window(self):
         """ Toggles the remote window. """
-        toggled = self.toggle_sharing(self.ui.toggle_remote_window_widget,
-                                      self.ui.smart_board,  # TODO change it
-                                      Info.START_REMOTE_WINDOW,
-                                      Info.STOP_REMOTE_WINDOW)
-        if toggled:
-            if self.ui.toggle_remote_window_widget.is_on:
-                self.remote_window.create_window()
-                self.remote_window.start()
-            else:
-                self.remote_window.close()
+        self.toggle_sharing(self.ui.toggle_remote_window_widget,
+                            self.ui.remote_window_container,
+                            Info.START_REMOTE_WINDOW,
+                            Info.STOP_REMOTE_WINDOW)
 
     def toggle_sharing(self, toggle_widget: ToggleWidget,
                        ui_widget: QtWidgets.QWidget,
                        start_msg: int, stop_msg: int) -> bool:
         """
+        Tries to toggle a widget that starts and stops sharing
+        (screen sharing / smart board / remote window).
+        If another sharing is currently live,
+        one can't start a new one until the live sharing finishes.
 
-        :param toggle_widget:
-        :param ui_widget:
-        :param start_msg:
-        :param stop_msg:
+        :param toggle_widget: The switch that turns on/off this sharing.
+        :param ui_widget: The widget in the ui.
+        :param start_msg: The info message to send when start sharing.
+        :param stop_msg:  The info message to send when stop sharing.
         :return: True if the toggle widget was toggled, False otherwise
         """
         if self.can_toggle(toggle_widget):
@@ -442,6 +450,14 @@ class MainWindow(QtWidgets.QMainWindow):
             toggle_widget.toggle()
             return True
         return False
+
+    def moveEvent(self, event: QtGui.QMoveEvent):
+        """
+        This function is called when this window is moved.
+        It updates the main_window_pos in the remote_window_container.
+        """
+        super(MainWindow, self).moveEvent(event)
+        self.ui.remote_window_container.set_main_window_pos(event.pos())
 
     def exit(self):
         """ Closes the clients and the gui. """

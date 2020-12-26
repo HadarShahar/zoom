@@ -19,9 +19,10 @@ class InfoServer(BroadcastServer):
         super(InfoServer, self).__init__(ip, client_in_port,
                                          client_out_port, 'info')
 
-        # list of messages related to screen sharing / painting
+        # these messages are related to the current sharing
+        # (screen sharing / smart board / remote window)
         # they will be sent to new client that connect to the meeting
-        self.last_msgs = []
+        self.last_status_msgs = []
 
     def update_par_id(self, par: Participant):
         """
@@ -45,7 +46,7 @@ class InfoServer(BroadcastServer):
         msg = (Info.CLIENTS_INFO,
                [p.get_info() for p in self.participants.values()])
         # send the last messages (related to sharing) to the new client
-        for m in [msg] + self.last_msgs:
+        for m in [msg] + self.last_status_msgs:
             send_packet(new_par.in_socket, pickle.dumps(m))
 
         # inform all the other clients that a new client has connected
@@ -70,13 +71,15 @@ class InfoServer(BroadcastServer):
         elif msg_name == Info.TOGGLE_VIDEO:
             par.is_video_on = not par.is_video_on
 
-        elif msg_name in (Info.START_SCREEN_SHARING, Info.START_PAINTING):
-            self.last_msgs.append((msg_name, msg_data))
-        elif msg_name == Info.STOP_SCREEN_SHARING:
-            self.last_msgs.remove((Info.START_SCREEN_SHARING, msg_data))
-        elif msg_name == Info.STOP_PAINTING:
-            self.last_msgs.remove((Info.START_PAINTING, msg_data))
+        elif msg_name in Info.OPPOSITE_MSGS:
+            self.last_status_msgs.append((msg_name, msg_data))
+        else:
 
+            for start_msg, stop_msg in Info.OPPOSITE_MSGS.items():
+                if msg_name == stop_msg:
+                    self.last_status_msgs.remove((start_msg, msg_data))
+
+        print(msg_name, msg_data)
         packet = create_packet(data)
         self.broadcast(par, packet)
 
@@ -92,20 +95,18 @@ class InfoServer(BroadcastServer):
             return
 
         msgs_to_remove = []
-        for msg in self.last_msgs:
+        for msg in self.last_status_msgs:
             msg_name, msg_data = msg
             # if the client who left was sharing screen / painting
             # inform all the  participants that he has stopped sharing
             if par.id == msg_data:
                 msgs_to_remove.append(msg)
+                if msg_name in Info.OPPOSITE_MSGS:
+                    broadcast_msg = (Info.OPPOSITE_MSGS[msg_name], par.id)
+                    self.broadcast_info_msg(par, broadcast_msg)
 
-                if msg_name == Info.START_SCREEN_SHARING:
-                    broadcast_msg = (Info.STOP_SCREEN_SHARING, par.id)
-                else:
-                    broadcast_msg = (Info.STOP_PAINTING, par.id)
-                self.broadcast_info_msg(par, broadcast_msg)
         for msg in msgs_to_remove:
-            self.last_msgs.remove(msg)
+            self.last_status_msgs.remove(msg)
 
         # inform all the others participants that he left
         msg = (Info.CLIENT_LEFT, par.id)

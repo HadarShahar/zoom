@@ -63,4 +63,5 @@ class VideoGrid(QtWidgets.QFrame):
         This function is called when the grid is resized.
         It updates the widgets size.
         """
+        super(VideoGrid, self).resizeEvent(event)
         self.update_widgets_size()

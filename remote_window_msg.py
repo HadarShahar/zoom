@@ -10,6 +10,7 @@ class RemoteWindowMsg(object):
     # messages types
     SET_SELECTION = 1
     REPLACE_LINE = 2
+    SET_TEXT = 3      # data = (text,)
 
     def __init__(self, msg_type: int, data: tuple):
         """ Constructor. """

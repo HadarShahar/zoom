@@ -21,7 +21,7 @@ class RemoteWindow(QThread):
     """
 
     # time to sleep after the window is created, to give it time to appear
-    INITIAL_DELAY_TIME = 0.1
+    INITIAL_DELAY_TIME = 0.25
 
     def __init__(self, program_name: str):
         """ Constructor. """
@@ -35,12 +35,22 @@ class RemoteWindow(QThread):
         process = subprocess.Popen([self.program_name])
         # sleep to give the window time to appear
         time.sleep(RemoteWindow.INITIAL_DELAY_TIME)
+
         # TODO check if could be several handles and why
         self.hwnd = RemoteWindow.get_hwnds_for_pid(process.pid)[0]
 
         print('created window:', repr(win32gui.GetWindowText(self.hwnd)))
         win32gui.SetWindowText(self.hwnd, 'Remote Window')
         self.is_open = True
+
+    def set_window_pos(self, x: int, y: int, width: int, height: int):
+        """
+        Sets the window position, and sets it to the top most window,
+        even when it is deactivated (HWND_TOPMOST),
+        and doesn't activate it after the movement (SWP_NOACTIVATE).
+        """
+        win32gui.SetWindowPos(self.hwnd, win32con.HWND_TOPMOST,
+                              x, y, width, height, win32con.SWP_NOACTIVATE)
 
     def close(self):
         """ Closes the window. """
