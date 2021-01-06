@@ -9,7 +9,7 @@
     in order to write values to the registry
     *********
 """
-import registry_constants
+from registry import registry_constants
 import winreg
 
 PROJECT_NAME = 'Hadar Zoom'

@@ -4,7 +4,7 @@
 """
 
 # import the server ip and the ports
-from registry_constants import *
+from registry.registry_constants import *
 
 # the parameter for socket.listen()
 NUMBER_OF_WAITING_CONNECTIONS = 100

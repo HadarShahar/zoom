@@ -16,8 +16,6 @@ from win32.notepad_state import NotepadState
 from remote_window_msg import RemoteWindowMsg
 
 user32 = ctypes.WinDLL('User32.dll')
-
-
 # user32 = ctypes.windll.user32
 
 
@@ -40,7 +38,7 @@ class RemoteNotepad(RemoteWindow):
     # send all the text to sync the editors.
     LEN_DIFF_THRESHOLD = 10
     LINE_SEPARATOR = '\r\n'
-    LOOP_DELAY_TIME = 0.25
+    LOOP_DELAY_TIME = 0.4
 
     new_msg = pyqtSignal(RemoteWindowMsg)
 
@@ -67,12 +65,12 @@ class RemoteNotepad(RemoteWindow):
         It sends messages using the new_msg signal whenever
         the text in the edit control changes.
         """
-        try:
-            while self.is_open:
+        while self.is_open:
+            try:
                 # self.time_demo()
                 time.sleep(RemoteNotepad.LOOP_DELAY_TIME)
 
-                if self.check_lines_diff() or self.check_text_len_diff():
+                if self.check_lines_diff():  # or self.check_text_len_diff():
                     continue
 
                 start_pos, end_pos = selection = self.get_selection()
@@ -86,14 +84,14 @@ class RemoteNotepad(RemoteWindow):
                         # A value of -1 specifies the current line number
                         current_line = self.line_from_char_index(-1)
                         data = (self.get_line_index(-1), current_line)
+                        data = (self.get_line_index(-1), current_line)
                         msg = RemoteWindowMsg(RemoteWindowMsg.REPLACE_LINE,
                                               data)
                         self.new_msg.emit(msg)
 
                 self.last_state.selection = selection
-        except Exception as e:
-            print('RemoteNotepad.run:', e)
-            self.close()
+            except Exception as e:
+                print('RemoteNotepad.run:', e)
 
     def check_lines_diff(self) -> bool:
         """
@@ -127,10 +125,12 @@ class RemoteNotepad(RemoteWindow):
             current_text = self.get_text()
         msg = RemoteWindowMsg(RemoteWindowMsg.SET_TEXT,
                               (current_text,))
+        print('send_all_text:', repr(current_text))
         self.new_msg.emit(msg)
 
     def handle_new_msg(self, msg: RemoteWindowMsg):
         """ Handles new RemoteWindowMsg. """
+        print('handling:', msg)
         change_text_operations = {
             RemoteWindowMsg.REPLACE_LINE: self.replace_line,
             RemoteWindowMsg.SET_TEXT: self.set_text
@@ -219,7 +219,7 @@ class RemoteNotepad(RemoteWindow):
             # insert empty lines at the last char index
             self.set_selection(last_char_index, last_char_index)
             empty_lines = RemoteNotepad.LINE_SEPARATOR * \
-                          (line_index + 1 - num_of_lines)
+                    (line_index + 1 - num_of_lines)
             self.msg_to_edit_control(EM_REPLACESEL, 0, empty_lines)
 
         line_beginning = self.first_char_index(line_index)
@@ -280,7 +280,11 @@ class RemoteNotepad(RemoteWindow):
         """
         start_pos = DWORD()
         end_pos = DWORD()
-        self.mutex.lock()
+
+        if not self.mutex.tryLock():
+            print('Could not acquire mutex in get_selection()')
+            return 0, 0
+
         # TODO change this call
         user32.SendMessageW(self.hwnd_edit, EM_GETSEL,
                             ctypes.byref(start_pos), ctypes.byref(end_pos))
@@ -310,6 +314,7 @@ class RemoteNotepad(RemoteWindow):
 
 
 def main():
+    """ Tests the remote notepad. """
     notepad = RemoteNotepad()
     notepad.create_window()
     notepad.run()

@@ -2,7 +2,8 @@
     Hadar Shahar
     The main app code.
 """
-from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import Qt
 import numpy as np
 import sys
 import threading
@@ -14,18 +15,22 @@ sys.path.insert(0, '..')
 from constants import *
 from GUI.gui_constants import *
 
-from GUI.chat.chat_window import ChatWindow
-from GUI.controls_bar.controls_bar_frame import ControlsBarFrame
+from GUI.ui_main_window import Ui_MainWindow
 from GUI.widgets.video_grid import VideoGrid
 from GUI.widgets.smart_board import SmartBoard
 from GUI.widgets.basic_video_widget import BasicVideoWidget
 from GUI.widgets.client_video_widget import ClientVideoWidget
 from GUI.controls_bar.toggle_widget import ToggleWidget
+from GUI.chat.msg_widget import MsgWidget
 from GUI.widgets.remote_window_container import RemoteWindowContainer
+from GUI.chat.chat_recipients import ChatRecipients
 
 from client.info_client import InfoClient
 from client.video.video_client import VideoClient
 from client.video.share_screen_client import ShareScreenClient
+from client.chat_client import ChatClient
+
+from chat_msg import ChatMsg
 
 
 # ========================================================== important!!!
@@ -39,9 +44,11 @@ def except_hook(cls, exception, traceback):
 sys.excepthook = except_hook
 
 
+# ======================================================================
+
+
 class MainWindow(QtWidgets.QMainWindow):
     """ Definition of the class MainWindow. """
-    UI_FILEPATH = 'ui_main_window.ui'
 
     def __init__(self):
         """ Initializes the main window. """
@@ -50,16 +57,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.is_audio_on = False  # just for testing
         self.is_video_on = True
 
-        # temporary values
-        self.id = b''
-        self.name = ''
         self.init_clients()
 
-        uic.loadUi(MainWindow.UI_FILEPATH, self)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
         self.create_controls_bar()
         self.create_video_grid()
-        self.chat_window = ChatWindow(self.id, self.horizontal_splitter)
+        self.init_chat()
         self.create_shared_screen()
         self.create_smart_board()
         self.init_remote_window()
@@ -107,11 +112,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.audio_client = AudioClient(SERVER_IP, CLIENT_IN_AUDIO_PORT,
         #                                 CLIENT_OUT_AUDIO_PORT, self.id)
 
+        # ================================================= chat
+        self.chat_client = ChatClient(SERVER_IP, CLIENT_IN_CHAT_PORT,
+                                      CLIENT_OUT_CHAT_PORT, self.id)
+        self.chat_client.new_msg.connect(self.show_chat_msg)
+
         # ================================================= start the clients
         self.clients = (self.info_client, self.video_client,
-                        self.share_screen_client)
-        # self.audio_client,  # TODO uncomment!!!
-
+                        self.share_screen_client,
+                        # self.audio_client,  # TODO uncomment!!!
+                        self.chat_client)
         for client in self.clients:
             client.start()
 
@@ -136,17 +146,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         elif msg_name == Info.CLIENT_LEFT:
             self.remove_video_widget(msg_data)
-            self.chat_window.remove_client(msg_data)
+            self.chat_recipients.remove(msg_data)
         elif msg_name == Info.NEW_PAINTING:
-            self.smart_board.draw_painting(msg_data)
+            self.ui.smart_board.draw_painting(msg_data)
         elif msg_name == Info.REMOTE_WINDOW_MSG:
-            self.remote_window_container.remote_window. \
+            self.ui.remote_window_container.remote_window. \
                 handle_new_msg(msg_data)
 
         widgets_start_msgs = {
-            Info.START_SCREEN_SHARING: self.shared_screen,
-            Info.START_PAINTING: self.smart_board,
-            Info.START_REMOTE_WINDOW: self.remote_window_container
+            Info.START_SCREEN_SHARING: self.ui.shared_screen,
+            Info.START_PAINTING: self.ui.smart_board,
+            Info.START_REMOTE_WINDOW: self.ui.remote_window_container
         }
         for start_msg, widget in widgets_start_msgs.items():
             if msg_name == start_msg:
@@ -156,29 +166,81 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def create_controls_bar(self):
         """ Creates the controls bar. """
-        self.controls_bar = ControlsBarFrame(
-            self.main_frame, self.is_audio_on, self.is_video_on)
-        self.main_grid_layout.addWidget(self.controls_bar,
-                                        # row, column, row_span, column_span
-                                        # 3, 0, 1, 3)
-                                        1, 0)
-        self.controls_bar.leave_button.clicked.connect(self.exit)
-        self.connect_toggles()
+        self.ui.controls_bar = QtWidgets.QFrame(self.ui.main_frame)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                            QtWidgets.QSizePolicy.Preferred)
+        self.ui.controls_bar.setSizePolicy(size_policy)
+        self.ui.controls_bar.setFixedHeight(55)
+        self.ui.controls_bar.setObjectName('chat')
 
-    def connect_toggles(self):
+        self.ui.controls_bar_layout = \
+            QtWidgets.QHBoxLayout(self.ui.controls_bar)
+        self.ui.controls_bar_layout. \
+            setContentsMargins(0, 0, 10, 0)  # left, top, right, bottom
+        self.ui.controls_bar_layout.setSpacing(0)
+
+        self.create_toggles()
+
+        self.ui.controls_bar_layout.addItem(self.default_hspacer())
+
+        self.ui.leave_button = QtWidgets.QPushButton('Leave',
+                                                     self.ui.controls_bar)
+        self.ui.leave_button.setFixedSize(QtCore.QSize(60, 25))
+        self.ui.leave_button.setObjectName('leave_button')
+        self.ui.leave_button.clicked.connect(self.exit)
+        self.ui.controls_bar_layout.addWidget(self.ui.leave_button)
+
+        self.ui.main_grid_layout.addWidget(self.ui.controls_bar,
+                                           # row, column, row_span, column_span
+                                           # 3, 0, 1, 3)
+                                           1, 0)
+
+    def create_toggles(self):
         """
-        Connects all the toggle buttons in the controls bar
-        to their callback methods.
+        Creates the toggle widgets for
+        audio, video, chat, share screen, smart board and remote window.
         """
-        bar = self.controls_bar
-        bar.toggle_audio_widget.clicked.connect(self.toggle_audio)
-        bar.toggle_video_widget.clicked.connect(self.toggle_video)
-        bar.toggle_chat_widget.clicked.connect(self.toggle_chat)
-        bar.toggle_share_screen_widget.clicked.connect(
-            self.toggle_share_screen)
-        bar.toggle_smart_board_widget.clicked.connect(self.toggle_smart_board)
-        bar.toggle_remote_window_widget.clicked.connect(
-            self.toggle_remote_window)
+        self.ui.toggle_audio_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_AUDIO_DICT,
+                         is_on=self.is_audio_on)
+        self.ui.toggle_audio_widget.clicked.connect(self.toggle_audio)
+
+        self.ui.toggle_video_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_VIDEO_DICT,
+                         is_on=self.is_video_on)
+        self.ui.toggle_video_widget.clicked.connect(self.toggle_video)
+
+        self.ui.toggle_chat_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_CHAT_DICT, is_on=False)
+        self.ui.toggle_chat_widget.clicked.connect(self.toggle_chat)
+
+        self.ui.toggle_share_screen_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_SHARE_SCREEN_DICT,
+                         is_on=False, toggle_onclick=False)
+        self.ui.toggle_share_screen_widget. \
+            clicked.connect(self.toggle_share_screen)
+
+        self.ui.toggle_smart_board_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_SMART_BOARD_DICT,
+                         is_on=False, toggle_onclick=False)
+        self.ui.toggle_smart_board_widget.clicked. \
+            connect(self.toggle_smart_board)
+
+        self.ui.toggle_remote_window_widget = \
+            ToggleWidget(self.ui.controls_bar, TOGGLE_REMOTE_WINDOW_DICT,
+                         is_on=False, toggle_onclick=False)
+        self.ui.toggle_remote_window_widget.clicked. \
+            connect(self.toggle_remote_window)
+
+        # add all the toggle widgets to the controls bar layout
+        widgets = (self.ui.toggle_audio_widget,
+                   self.ui.toggle_video_widget,
+                   self.ui.toggle_chat_widget,
+                   self.ui.toggle_share_screen_widget,
+                   self.ui.toggle_smart_board_widget,
+                   self.ui.toggle_remote_window_widget)
+        for widget in widgets:
+            self.ui.controls_bar_layout.addWidget(widget)
 
     def toggle_audio(self):
         """ Turns on/off the audio. """
@@ -194,32 +256,32 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggle_chat(self):
         """ Shows/hides the chat. """
-        if self.controls_bar.toggle_chat_widget.is_on:
-            self.chat_window.show()
+        if self.ui.toggle_chat_widget.is_on:
+            self.ui.chat_frame.show()
         else:
-            self.chat_window.hide()
+            self.ui.chat_frame.hide()
 
     def add_client(self, client_id: bytes, client_name: str,
                    is_audio_on: bool, is_video_on: bool):
         """ Adds a client to the gui. """
         self.add_video_widget(client_id, client_name, is_audio_on, is_video_on)
-        self.chat_window.add_client(client_id, client_name)
+        self.chat_recipients.add(client_id, client_name)
 
     def create_video_grid(self):
         """ Creates the video grid. """
-        self.video_grid = VideoGrid(self.video_grid_container)
-        self.video_grid_container_layout. \
-            addWidget(self.video_grid, 1, 1)  # 1, 1 because of the spacers
+        self.ui.video_grid = VideoGrid(self.ui.video_grid_container)
+        self.ui.video_grid_container_layout. \
+            addWidget(self.ui.video_grid, 1, 1)  # 1, 1 because of the spacers
 
     def add_video_widget(self, client_id: bytes, client_name: str,
                          is_audio_on: bool, is_video_on: bool):
         """
         Creates a new ClientVideoWidget object and adds it to the video_grid.
         """
-        video_widget = ClientVideoWidget(self.video_grid,
+        video_widget = ClientVideoWidget(self.ui.video_grid,
                                          client_id, client_name,
                                          is_audio_on, is_video_on)
-        done = self.video_grid.add(video_widget)
+        done = self.ui.video_grid.add(video_widget)
         if done:
             self.video_widgets[client_id] = video_widget
 
@@ -228,7 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Removes the video widget of a client, given its id.
         """
         video_widget = self.video_widgets[client_id]
-        self.video_grid.remove(video_widget)
+        self.ui.video_grid.remove(video_widget)
         del self.video_widgets[client_id]
 
     def show_video_frame(self, frame: np.ndarray, client_id: bytes):
@@ -241,33 +303,83 @@ class MainWindow(QtWidgets.QMainWindow):
         if client_id in self.video_widgets:
             self.video_widgets[client_id].show_frame(frame)
 
+    def init_chat(self):
+        """ Initializes the chat. """
+        self.ui.messages_layout.setAlignment(Qt.AlignTop)
+        self.ui.chat_scroll_area.verticalScrollBar().rangeChanged.connect(
+            self.scroll_chat_bar)
+        self.chat_recipients = ChatRecipients(self.id)
+        self.ui.recipient_combo_box.setModel(self.chat_recipients)
+
+        # QLineEdit will emit the signal returnPressed()
+        # whenever the user presses the enter key while in it
+        self.ui.chat_input.returnPressed.connect(self.send_chat_msg)
+        self.ui.chat_frame.hide()
+
+    def scroll_chat_bar(self, start_range: int, end_range: int):
+        """
+        Scrolls the chat bar to the bottom.
+        This method is called when the chat scroll bar
+        range is changing (when the messages overflow it).
+        """
+        self.ui.chat_scroll_area.verticalScrollBar().setValue(end_range)
+
+    def send_chat_msg(self):
+        """
+        Receives text from the user input
+        and sends it as a chat message.
+        """
+        text = self.ui.chat_input.text()
+        self.ui.chat_input.clear()
+        if text == '':
+            return
+
+        # get the id of the selected recipient
+        current_index = self.ui.recipient_combo_box.currentIndex()
+        recipient_id = self.chat_recipients.item(current_index).data()
+
+        msg = ChatMsg(self.id, recipient_id, text)
+        msg.add_timestamp()  # TODO maybe do it on the server
+
+        self.chat_client.send_msg(msg)
+        self.show_chat_msg(msg)
+
+    def show_chat_msg(self, msg: ChatMsg):
+        """ Shows a given chat message. """
+        sender_name = self.chat_recipients.get_name(msg.sender_id)
+        recipient_name = self.chat_recipients.get_name(msg.recipient_id)
+
+        msg_widget = MsgWidget(self.ui.messages_widget, msg, sender_name,
+                               recipient_name)
+        self.ui.messages_layout.addWidget(msg_widget)
+
     def create_shared_screen(self):
         """ Creates the shared screen. """
-        self.shared_screen = BasicVideoWidget(
-            self.main_vertical_splitter)
-        self.shared_screen.hide()
+        self.ui.shared_screen = BasicVideoWidget(
+            self.ui.main_vertical_splitter)
+        self.ui.shared_screen.hide()
 
     def show_shared_screen(self, frame: np.ndarray, client_id: bytes):
         """ Shows a given frame in the shared screen. """
         # show the frame only if the shared screen is visible
-        if self.shared_screen.isVisible():
-            self.shared_screen.show_frame(frame)
+        if self.ui.shared_screen.isVisible():
+            self.ui.shared_screen.show_frame(frame)
 
     def create_smart_board(self):
         """ Creates the smart board. """
-        self.smart_board = SmartBoard(self.main_vertical_splitter)
-        self.smart_board.new_painting.connect(
+        self.ui.smart_board = SmartBoard(self.ui.main_vertical_splitter)
+        self.ui.smart_board.new_painting.connect(
             self.info_client.send_painting_msg)
-        self.smart_board.hide()
+        self.ui.smart_board.hide()
 
     def init_remote_window(self):
         """ Initializes the remote window and creates its container. """
         # RemoteWindowContainer
-        self.remote_window_container = \
-            RemoteWindowContainer(self.main_vertical_splitter)
-        self.remote_window_container.remote_window.new_msg.connect(
+        self.ui.remote_window_container = \
+            RemoteWindowContainer(self.ui.main_vertical_splitter)
+        self.ui.remote_window_container.remote_window.new_msg.connect(
             self.info_client.send_remote_window_msg)
-        self.remote_window_container.hide()
+        self.ui.remote_window_container.hide()
 
     def can_start_sharing(self) -> bool:
         """
@@ -275,8 +387,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if none of the participants is already sharing.
         """
         # if one of these widgets is visible, someone is already sharing
-        widgets = (self.shared_screen, self.smart_board,
-                   self.remote_window_container)
+        widgets = (self.ui.shared_screen, self.ui.smart_board,
+                   self.ui.remote_window_container)
         for widget in widgets:
             if widget.isVisible():
                 self.show_error_msg("Can't start sharing",
@@ -295,24 +407,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggle_share_screen(self):
         """ Toggles the screen sharing. """
-        toggled = self.toggle_sharing(
-            self.controls_bar.toggle_share_screen_widget, self.shared_screen,
-            Info.START_SCREEN_SHARING, Info.STOP_SCREEN_SHARING)
+        toggled = self.toggle_sharing(self.ui.toggle_share_screen_widget,
+                                      self.ui.shared_screen,
+                                      Info.START_SCREEN_SHARING,
+                                      Info.STOP_SCREEN_SHARING)
         if toggled:
             self.share_screen_client.toggle_is_sharing()
 
     def toggle_smart_board(self):
         """ Toggle the smart board sharing. """
-        self.toggle_sharing(
-            self.controls_bar.toggle_smart_board_widget, self.smart_board,
-            Info.START_PAINTING, Info.STOP_PAINTING)
+        self.toggle_sharing(self.ui.toggle_smart_board_widget,
+                            self.ui.smart_board,
+                            Info.START_PAINTING, Info.STOP_PAINTING)
 
     def toggle_remote_window(self):
         """ Toggles the remote window. """
-        self.toggle_sharing(
-            self.controls_bar.toggle_remote_window_widget,
-            self.remote_window_container,
-            Info.START_REMOTE_WINDOW, Info.STOP_REMOTE_WINDOW)
+        self.toggle_sharing(self.ui.toggle_remote_window_widget,
+                            self.ui.remote_window_container,
+                            Info.START_REMOTE_WINDOW,
+                            Info.STOP_REMOTE_WINDOW)
 
     def toggle_sharing(self, toggle_widget: ToggleWidget,
                        ui_widget: QtWidgets.QWidget,
@@ -346,7 +459,7 @@ class MainWindow(QtWidgets.QMainWindow):
         It updates the main_window_pos in the remote_window_container.
         """
         super(MainWindow, self).moveEvent(event)
-        self.remote_window_container.set_main_window_pos(event.pos())
+        self.ui.remote_window_container.set_main_window_pos(event.pos())
 
     def exit(self):
         """ Closes the clients and the gui. """
@@ -354,6 +467,12 @@ class MainWindow(QtWidgets.QMainWindow):
         for client in self.clients:
             client.close()
         self.close()  # close the gui
+
+    @staticmethod
+    def default_hspacer() -> QtWidgets.QSpacerItem:
+        """ Returns a new horizontal spacer item with the default values. """
+        return QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding,
+                                     QtWidgets.QSizePolicy.Minimum)
 
     @staticmethod
     def show_error_msg(text: str, info_text: str):

@@ -5,8 +5,7 @@ import win32gui
 import win32process
 import win32clipboard
 import ctypes
-from ctypes.wintypes import WPARAM, LPARAM
-from registry_utils import get_reg_local_machine
+from registry.registry_utils import get_reg_local_machine
 
 WORD_PATH = get_reg_local_machine(r'SOFTWARE\Microsoft\Windows\CurrentVersion'
                                   r'\App Paths\Winword.exe', '')

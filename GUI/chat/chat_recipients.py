@@ -15,9 +15,9 @@ class ChatRecipients(QtGui.QStandardItemModel):
     it is used for selecting a chat recipient.
     """
 
-    def __init__(self, my_id: bytes):
+    def __init__(self, client_id: bytes):
         super(ChatRecipients, self).__init__()
-        self.id = my_id
+        self.client_id = client_id
 
         self.recipients = {}  # {recipient_id: recipient_name}
 
@@ -41,7 +41,7 @@ class ChatRecipients(QtGui.QStandardItemModel):
 
     def get_name(self, recipient_id: bytes) -> str:
         """ Returns the recipient name, given its id. """
-        if recipient_id == self.id:
+        if recipient_id == self.client_id:
             return 'Me'
         return self.recipients[recipient_id]
         # for i in range(self.rowCount()):

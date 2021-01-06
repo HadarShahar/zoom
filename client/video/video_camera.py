@@ -19,7 +19,9 @@ class VideoCamera(object):
 
         # try to connect to the camera in a separate thread
         # because it might take some time
-        threading.Thread(target=self.connect_to_camera).start()
+        thread = threading.Thread(target=self.connect_to_camera)
+        thread.daemon = True  # so it won't prevent the app from exiting
+        thread.start()
 
         # self.connect_to_camera()
         # if not self.cap.isOpened():
@@ -60,7 +62,8 @@ class VideoCamera(object):
                     cv2.waitKey(1)
                 return frame
             else:
-                print('The frame was not read correctly, maybe the camera is already in use.')
+                print(
+                    'The frame was not read correctly, maybe the camera is already in use.')
         self.connect_to_camera()
 
     def __del__(self):
