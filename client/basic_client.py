@@ -2,60 +2,50 @@
     Hadar Shahar
     The basic client code.
 """
-import socket
-import sys
 import threading
-from constants import EXIT_SIGN
-from network_protocol import send_packet
+from abc import ABCMeta, abstractmethod
 from PyQt5.QtCore import QThread
 
 
-# TODO make it abstract class
-# class BasicClient(threading.Thread):
-class BasicClient(QThread):
+class QABCMeta(ABCMeta, type(QThread)):
     """
-    Definition of the class BasicClient.
+    This is a metaclass used to solve the metaclass conflict
+    in the class BasicClient.
+    ("metaclass conflict: the metaclass of a derived class must be
+    a (non-strict) subclass of the metaclasses of all its bases")
+
+    https://stackoverflow.com/questions/28720217/multiple-inheritance-metaclass-conflict
+
+    This conflict occurs because BasicClient must inherit from
+    QtCore.QObject (or its subclasses) in order to use signals,
+    and it also should be an abstract class.
+    """
+    pass
+
+
+class BasicClient(QThread, metaclass=QABCMeta):
+    """
+    Definition of the abstract class BasicClient.
 
     This class must inherit from QtCore.QThread and not threading.Thread
     because new signals are defined in its sub-classes.
     New signals should only be defined in sub-classes of QObject.
+
+    It's also an abstract class (it's metaclass is derived from ABCMeta)
+    because it contains abstract methods.
     """
 
-    def __init__(self, ip: str, in_socket_port: int, out_socket_port: int,
-                 client_id: bytes, is_sharing=True):
-        """
-        Initializes input and output sockets for the BasicClient.
-        """
+    def __init__(self, client_id: bytes, is_sharing=True):
+        """ Constructor. """
         super(BasicClient, self).__init__()
-        try:
-            self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.in_socket.connect((ip, in_socket_port))
-
-            self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.out_socket.connect((ip, out_socket_port))
-
-            self.id = client_id
-            self.update_id()
-
-            self.is_sharing = is_sharing
-            self.running = True
-
-        except socket.error as msg:  # TODO nice exit
-            print('Connection failure: %s\n terminating program' % msg)
-            sys.exit(1)
-
-    def update_id(self):
-        """
-        This method sends the id to the server,
-        but the InfoClient overrides this method and
-        receives the id from the server.
-        """
-        send_packet(self.out_socket, self.id)
+        self.id = client_id
+        self.is_sharing = is_sharing
+        self.running = True
 
     def toggle_is_sharing(self):
         """
         Toggles the is_sharing property and
-        starts a thread that sends data if starting sharing data.
+        starts a thread that sends data if it starts sharing data.
         """
         self.is_sharing = not self.is_sharing
         if self.is_sharing:
@@ -86,31 +76,24 @@ class BasicClient(QThread):
                 print(f'{func.__qualname__}: {e}')
                 self.close()
 
+    @abstractmethod
     def send_data_loop(self):
         """
         Sends data to the server in a loop
-        the VideoClient and AudioClient implement this method.
+        the clients implement this method.
         """
         pass
 
+    @abstractmethod
     def receive_data_loop(self):
         """
         Receives data from the server in a loop
-        the VideoClient and AudioClient implement this method.
+        the clients implement this method.
         """
         pass
 
     def close(self):
-        """
-        Sends the server EXIT_SIGN (if the output socket is open)
-        and closes the sockets.
-        """
+        """ Stops running. """
         print('closing')
         self.running = False
 
-        # if self.out_socket.fileno() != -1:
-        # fileno() will return -1 for closed sockets.
-        if not self.out_socket._closed:
-            send_packet(self.out_socket, EXIT_SIGN)
-        self.in_socket.close()
-        self.out_socket.close()

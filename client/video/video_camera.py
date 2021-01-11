@@ -45,9 +45,9 @@ class VideoCamera(object):
 
     def get_frame(self, show=False):
         """
-        Reads a frame from the camera and
-        returns a numpy array (np.ndarray) if the frame was read successfully,
-        otherwise returns None.
+        Reads a frame from the camera.
+        Returns a numpy array (np.ndarray) if the frame was read successfully,
+        otherwise None.
         """
         if self.cap is None:
             return None
@@ -62,8 +62,8 @@ class VideoCamera(object):
                     cv2.waitKey(1)
                 return frame
             else:
-                print(
-                    'The frame was not read correctly, maybe the camera is already in use.')
+                print('The frame was not read correctly, '
+                      'maybe the camera is already in use.')
         self.connect_to_camera()
 
     def __del__(self):

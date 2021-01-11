@@ -7,9 +7,9 @@ import numpy as np
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QMouseEvent, QKeyEvent, QColor
-from GUI.widgets.smart_board_toolbar import SmartBoardToolbar
+from GUI.smart_board.smart_board_toolbar import SmartBoardToolbar
 from GUI.widgets.basic_video_widget import BasicVideoWidget
-from painting import Painting
+from custom_messages.painting import Painting
 
 
 class SmartBoard(QtWidgets.QFrame):

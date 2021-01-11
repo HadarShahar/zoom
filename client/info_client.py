@@ -4,14 +4,14 @@
 """
 import pickle
 from PyQt5.QtCore import pyqtSignal
-from network_protocol import send_packet, recv_packet
+from tcp_network_protocol import send_packet, recv_packet
 from constants import Info
-from client.basic_client import BasicClient
-from painting import Painting
-from remote_window_msg import RemoteWindowMsg
+from client.basic_tcp_client import BasicTcpClient
+from custom_messages.painting import Painting
+from custom_messages.remote_window_msg import RemoteWindowMsg
 
 
-class InfoClient(BasicClient):
+class InfoClient(BasicTcpClient):
     """ Definition of the class InfoClient. """
 
     new_info = pyqtSignal(tuple)

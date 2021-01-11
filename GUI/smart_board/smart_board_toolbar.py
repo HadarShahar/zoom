@@ -2,9 +2,9 @@
     Hadar Shahar
     SmartBoardToolbar.
 """
-from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSignal
-from GUI.widgets.slider import Slider
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSignal
+from GUI.smart_board.slider import Slider
 
 
 class SmartBoardToolbar(QtWidgets.QFrame):

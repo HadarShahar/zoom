@@ -14,18 +14,18 @@ sys.path.insert(0, '..')
 from constants import *
 from GUI.gui_constants import *
 
-from GUI.chat.chat_window import ChatWindow
 from GUI.controls_bar.controls_bar_frame import ControlsBarFrame
-from GUI.widgets.video_grid import VideoGrid
-from GUI.widgets.smart_board import SmartBoard
+from GUI.video_grid.video_grid import VideoGrid
+from GUI.chat.chat_window import ChatWindow
+from GUI.smart_board.smart_board import SmartBoard
 from GUI.widgets.basic_video_widget import BasicVideoWidget
-from GUI.widgets.client_video_widget import ClientVideoWidget
 from GUI.controls_bar.toggle_widget import ToggleWidget
 from GUI.widgets.remote_window_container import RemoteWindowContainer
 
 from client.info_client import InfoClient
-from client.video.video_client import VideoClient
+from client.video.camera_client import CameraClient
 from client.video.share_screen_client import ShareScreenClient
+from client.audio.audio_client import AudioClient
 
 
 # ========================================================== important!!!
@@ -47,28 +47,23 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Initializes the main window. """
         super(MainWindow, self).__init__()
 
-        self.is_audio_on = False  # just for testing
+        self.is_audio_on = True
         self.is_video_on = True
 
         # temporary values
         self.id = b''
         self.name = ''
+        self.clients = []
         self.init_clients()
 
         uic.loadUi(MainWindow.UI_FILEPATH, self)
 
         self.create_controls_bar()
         self.create_video_grid()
-        self.chat_window = ChatWindow(self.id, self.horizontal_splitter)
+        self.create_chat_window()
         self.create_shared_screen()
         self.create_smart_board()
         self.init_remote_window()
-
-        # {client_id: ClientVideoWidget(...)}
-        self.video_widgets: [bytes, ClientVideoWidget] = {}
-        self.add_video_widget(self.id, self.name,
-                              is_audio_on=self.is_audio_on,
-                              is_video_on=self.is_video_on)
 
     def init_clients(self):
         """ 
@@ -83,19 +78,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.info_client.new_info.connect(self.handle_new_info)
 
         # ================================================= video
-        self.video_client = VideoClient(SERVER_IP, CLIENT_IN_VIDEO_PORT,
-                                        CLIENT_OUT_VIDEO_PORT, self.id)
-        # print(id(self.video_client.frame_captured))
-        # VideoClient.frame_captured.connect( # doesn't work
-        self.video_client.frame_captured.connect(
-            lambda frame: self.show_video_frame(frame, self.id)
-        )
-        self.video_client.frame_received.connect(self.show_video_frame)
+        self.video_client = CameraClient(SERVER_IP, CLIENT_IN_VIDEO_PORT,
+                                         CLIENT_OUT_VIDEO_PORT, self.id)
+        # # print(id(self.video_client.frame_captured))
+        # # VideoClient.frame_captured.connect( # doesn't work
+        # self.video_client.frame_captured.connect(self.video_grid.show_my_frame)
+        # self.video_client.frame_received.connect(
+        #     self.video_grid.show_video_frame)
 
         # ================================================= share screen
-        self.share_screen_client = \
-            ShareScreenClient(SERVER_IP, CLIENT_IN_SCREEN_PORT,
-                              CLIENT_OUT_SCREEN_PORT, self.id)
+        self.share_screen_client = ShareScreenClient(
+            SERVER_IP, CLIENT_IN_SCREEN_PORT, CLIENT_OUT_SCREEN_PORT, self.id)
         self.share_screen_client.frame_captured.connect(
             lambda frame: self.show_shared_screen(frame, self.id)
         )
@@ -103,15 +96,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.show_shared_screen)
 
         # ================================================= audio
-        # TODO uncomment!!!
-        # self.audio_client = AudioClient(SERVER_IP, CLIENT_IN_AUDIO_PORT,
-        #                                 CLIENT_OUT_AUDIO_PORT, self.id)
+        self.audio_client = AudioClient(SERVER_IP, CLIENT_IN_AUDIO_PORT,
+                                        CLIENT_OUT_AUDIO_PORT, self.id)
 
         # ================================================= start the clients
-        self.clients = (self.info_client, self.video_client,
-                        self.share_screen_client)
-        # self.audio_client,  # TODO uncomment!!!
-
+        # must be a list because chat client will be added
+        self.clients = [self.info_client, self.video_client,
+                        self.share_screen_client, self.audio_client]
         for client in self.clients:
             client.start()
 
@@ -130,12 +121,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # msg_data is the client id
         elif msg_name == Info.TOGGLE_AUDIO:
-            self.video_widgets[msg_data].toggle_audio()
+            self.video_grid.get_video_widget(msg_data).toggle_audio()
         elif msg_name == Info.TOGGLE_VIDEO:
-            self.video_widgets[msg_data].toggle_video()
+            self.video_grid.get_video_widget(msg_data).toggle_video()
 
         elif msg_name == Info.CLIENT_LEFT:
-            self.remove_video_widget(msg_data)
+            self.video_grid.remove_video_widget(msg_data)
             self.chat_window.remove_client(msg_data)
         elif msg_name == Info.NEW_PAINTING:
             self.smart_board.draw_painting(msg_data)
@@ -183,13 +174,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggle_audio(self):
         """ Turns on/off the audio. """
         self.audio_client.toggle_is_sharing()
-        self.video_widgets[self.id].toggle_audio()
+        self.video_grid.get_video_widget(self.id).toggle_audio()
         self.info_client.send_toggle_msg(Info.TOGGLE_AUDIO)
 
     def toggle_video(self):
         """ Turns on/off the video. """
         self.video_client.toggle_is_sharing()
-        self.video_widgets[self.id].toggle_video()
+        self.video_grid.get_video_widget(self.id).toggle_video()
         self.info_client.send_toggle_msg(Info.TOGGLE_VIDEO)
 
     def toggle_chat(self):
@@ -202,44 +193,25 @@ class MainWindow(QtWidgets.QMainWindow):
     def add_client(self, client_id: bytes, client_name: str,
                    is_audio_on: bool, is_video_on: bool):
         """ Adds a client to the gui. """
-        self.add_video_widget(client_id, client_name, is_audio_on, is_video_on)
+        self.video_grid.add_video_widget(
+            client_id, client_name, is_audio_on, is_video_on)
         self.chat_window.add_client(client_id, client_name)
 
     def create_video_grid(self):
         """ Creates the video grid. """
-        self.video_grid = VideoGrid(self.video_grid_container)
-        self.video_grid_container_layout. \
-            addWidget(self.video_grid, 1, 1)  # 1, 1 because of the spacers
+        self.video_grid = VideoGrid(self.video_client,
+                                    self.video_grid_container)
+        self.video_grid.add_video_widget(self.id, self.name,
+                                         is_audio_on=self.is_audio_on,
+                                         is_video_on=self.is_video_on)
 
-    def add_video_widget(self, client_id: bytes, client_name: str,
-                         is_audio_on: bool, is_video_on: bool):
-        """
-        Creates a new ClientVideoWidget object and adds it to the video_grid.
-        """
-        video_widget = ClientVideoWidget(self.video_grid,
-                                         client_id, client_name,
-                                         is_audio_on, is_video_on)
-        done = self.video_grid.add(video_widget)
-        if done:
-            self.video_widgets[client_id] = video_widget
+        self.video_grid_container_layout.addWidget(
+            self.video_grid, 1, 1)  # 1, 1 because of the spacers
 
-    def remove_video_widget(self, client_id: bytes):
-        """
-        Removes the video widget of a client, given its id.
-        """
-        video_widget = self.video_widgets[client_id]
-        self.video_grid.remove(video_widget)
-        del self.video_widgets[client_id]
-
-    def show_video_frame(self, frame: np.ndarray, client_id: bytes):
-        """
-        Receives a frame and the id of the client who sent it,
-        and displays the frame in the matching video widget.
-        """
-        # the frame might be received after the client left,
-        # and then its video widget isn't in self.video_widgets
-        if client_id in self.video_widgets:
-            self.video_widgets[client_id].show_frame(frame)
+    def create_chat_window(self):
+        """ Creates the chat window. """
+        self.chat_window = ChatWindow(self.id, self.horizontal_splitter)
+        self.clients.append(self.chat_window.client)
 
     def create_shared_screen(self):
         """ Creates the shared screen. """

@@ -5,18 +5,17 @@
 from PIL import ImageGrab
 import numpy as np
 import cv2
-from client.video.video_client import VideoClient
+from client.video.basic_udp_video_client import BasicUdpVideoClient
 
 
-class ShareScreenClient(VideoClient):
+class ShareScreenClient(BasicUdpVideoClient):
     """ Definition of the class ShareScreenClient. """
 
-    def __init__(self, ip: str, in_socket_port: int, out_socket_port: int, client_id: bytes):
+    def __init__(self, ip: str, in_socket_port: int,
+                 out_socket_port: int, client_id: bytes):
         """ Constructor. """
-        super(ShareScreenClient, self).__init__(ip, in_socket_port, out_socket_port,
-                                                client_id,
-                                                is_sharing=False,
-                                                is_camera_client=False)
+        super(ShareScreenClient, self).__init__(
+            ip, in_socket_port, out_socket_port, client_id, is_sharing=False)
 
     def get_frame(self) -> np.ndarray:
         """

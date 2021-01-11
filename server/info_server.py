@@ -3,13 +3,13 @@
     The info server code.
 """
 import pickle
-from network_protocol import create_packet, send_packet, recv_packet
+from tcp_network_protocol import create_packet, send_packet, recv_packet
 from constants import Info
-from server.broadcast_server import BroadcastServer
+from server.broadcast_tcp_server import BroadcastTcpServer
 from server.participant import Participant
 
 
-class InfoServer(BroadcastServer):
+class InfoServer(BroadcastTcpServer):
     """ Definition of the class InfoServer. """
 
     next_client_id = 0
@@ -79,7 +79,6 @@ class InfoServer(BroadcastServer):
                 if msg_name == stop_msg:
                     self.last_status_msgs.remove((start_msg, msg_data))
 
-        print(msg_name, msg_data)
         packet = create_packet(data)
         self.broadcast(par, packet)
 

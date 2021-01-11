@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from GUI.chat.msg_widget import MsgWidget
 from GUI.chat.chat_recipients import ChatRecipients
 from client.chat_client import ChatClient
-from chat_msg import ChatMsg
+from custom_messages.chat_msg import ChatMsg
 
 from registry.registry_constants import \
     SERVER_IP, CLIENT_IN_CHAT_PORT, CLIENT_OUT_CHAT_PORT

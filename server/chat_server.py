@@ -2,20 +2,20 @@
     Hadar Shahar
     The chat server code.
 """
-import socket
 import pickle
-from network_protocol import create_packet, recv_packet
-from chat_msg import ChatMsg
-from server.broadcast_server import BroadcastServer
+from tcp_network_protocol import create_packet
+from custom_messages.chat_msg import ChatMsg
+from server.broadcast_tcp_server import BroadcastTcpServer
 from server.participant import Participant
 
 
-class ChatServer(BroadcastServer):
+class ChatServer(BroadcastTcpServer):
     """ Definition of the class ChatServer. """
 
     def __init__(self, ip: str, client_in_port: int, client_out_port: int):
         """ Constructor. """
-        super(ChatServer, self).__init__(ip, client_in_port, client_out_port, 'chat')
+        super(ChatServer, self).__init__(ip, client_in_port,
+                                         client_out_port, 'chat')
 
     def handle_new_data(self, par: Participant, data: bytes):
         """

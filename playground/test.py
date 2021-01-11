@@ -14,22 +14,37 @@
 # print(Example.itsProblem)
 
 
-class A:
+from PyQt5.QtCore import QObject, pyqtSignal
+
+
+class A(QObject):
+    num = 0
+    signal = pyqtSignal()
+
     def __init__(self):
-        print('A')
-        super().__init__()
+        super(A, self).__init__()
+        print(self.num is A.num)
+        print(self.signal is A.signal)
 
 
-class B(A):
+a = A()
+print()
+
+
+class First(object):
     def __init__(self):
-        print('B')
-        super().__init__()
+        print("first")
 
 
-class C(B):
+class Second(object):
     def __init__(self):
-        print('C')
-        super().__init__()
+        print("second")
 
 
-C()
+class Third(First, Second):
+    def __init__(self):
+        super(Third, self).__init__()
+        print("that's it")
+
+
+Third()

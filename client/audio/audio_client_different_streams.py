@@ -2,12 +2,12 @@
     Hadar Shahar
 
 """
-from client.basic_client import BasicClient
+from client.basic_tcp_client import BasicTcpClient
 from client.audio.audio_stream import AudioStream
-from network_protocol import send_packet, recv_packet
+from tcp_network_protocol import send_packet, recv_packet
 
 
-class AudioClient(BasicClient):
+class AudioClient(BasicTcpClient):
     """ definition of the class AudioClient """
 
     def __init__(self, ip, in_socket_port, out_socket_port):

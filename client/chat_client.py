@@ -3,25 +3,26 @@
     The chat client code.
 """
 from PyQt5.QtCore import pyqtSignal
-from network_protocol import send_packet, recv_packet
-from chat_msg import ChatMsg
-from client.basic_client import BasicClient
+from tcp_network_protocol import send_packet, recv_packet
+from custom_messages.chat_msg import ChatMsg
+from client.basic_tcp_client import BasicTcpClient
 import pickle
 
 
-class ChatClient(BasicClient):
-    """ definition of the class ChatClient """
+class ChatClient(BasicTcpClient):
+    """ Definition of the class ChatClient. """
 
     new_msg = pyqtSignal(ChatMsg)
 
     def __init__(self, ip: str, in_socket_port: int,
                  out_socket_port: int, client_id: bytes):
-        """ constructor """
+        """ Constructor. """
         super(ChatClient, self).__init__(ip, in_socket_port,
                                          out_socket_port, client_id)
 
     def send_data_loop(self):
         """
+        Just overrides the abstract method in the base class.
         """
         pass
 

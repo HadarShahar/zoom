@@ -3,7 +3,7 @@
 
 """
 from PyQt5 import QtWidgets
-from chat_msg import ChatMsg
+from custom_messages.chat_msg import ChatMsg
 
 
 class MsgWidget(QtWidgets.QFrame):

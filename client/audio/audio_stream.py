@@ -1,6 +1,6 @@
 """
     Hadar Shahar
-
+    AudioStream.
 """
 import pyaudio
 import wave
@@ -10,10 +10,10 @@ from array import array
 class AudioStream(object):
     """ Definition of the class AudioStream. """
 
-    CHUNK = 1024  # record in chunks of 1024 samples
+    CHUNK = 1024              # record in chunks of 1024 samples
     FORMAT = pyaudio.paInt16  # 16 bits per sample
-    CHANNELS = 1  # this value is 2 in the documentation example
-    RATE = 44100  # record at 44100 samples per second
+    CHANNELS = 1              # this value is 2 in the documentation example
+    RATE = 44100              # record at 44100 samples per second
     SILENT_THRESHOLD = 500
 
     def __init__(self, input=True, output=True):
@@ -66,7 +66,7 @@ class AudioStream(object):
         return max(data) < AudioStream.SILENT_THRESHOLD
 
 
-# ====================================================================== testing
+# ==================================================================== testing
 
 def record_and_play():
     stream = AudioStream()

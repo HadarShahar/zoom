@@ -1,24 +1,24 @@
 """
     Hadar Shahar
-    The broadcast server code.
+    BroadcastTcpServer.
 """
 import socket
 import sys
 import threading
 from constants import NUMBER_OF_WAITING_CONNECTIONS, EXIT_SIGN
 from server.participant import Participant
-from network_protocol import create_packet, send_packet, recv_packet
+from tcp_network_protocol import create_packet, send_packet, recv_packet
 
 
-class BroadcastServer(threading.Thread):
-    """ Definition of the class BroadcastServer. """
+class BroadcastTcpServer(threading.Thread):
+    """ Definition of the class BroadcastTcpServer. """
 
     def __init__(self, ip: str, client_in_port: int,
                  client_out_port: int, server_name: str):
         """
         Initializes input and output sockets for the BroadcastServer.
         """
-        super(BroadcastServer, self).__init__()
+        super(BroadcastTcpServer, self).__init__()
         self.server_name = server_name
         try:
             # socket that accepts each client input socket
@@ -48,42 +48,6 @@ class BroadcastServer(threading.Thread):
         except socket.error as msg:
             print(f'{self.server_name} connection failure: {msg}')
             sys.exit(1)
-
-    # def run(self):
-    #     """
-    #     """
-    #     threading.Thread(target=self.accept_out_socket).start()
-    #     threading.Thread(target=self.accept_in_socket).start()
-    #
-    # def accept_out_socket(self):
-    #     """
-    #     accept clients that connect to the out_socket
-    #     """
-    #     while True:
-    #         client_in_socket, address = self.accept_clients_in.accept()
-    #         hostaddr, port = address
-    #         if hostaddr in self.connecting_pars:
-    #             par = self.connecting_pars[hostaddr]
-    #             par.in_socket = client_in_socket
-    #             self.add_participant(par)
-    #         else:
-    #             self.connecting_pars[hostaddr] = \
-    #                 Participant(address, in_socket=client_in_socket)
-    #
-    # def accept_in_socket(self):
-    #     """
-    #     accept clients that connect to the in_socket
-    #     """
-    #     while True:
-    #         client_out_socket, address = self.accept_clients_out.accept()
-    #         hostaddr, port = address
-    #         if hostaddr in self.connecting_pars:
-    #             par = self.connecting_pars[hostaddr]
-    #             par.out_socket = client_out_socket
-    #             self.add_participant(par)
-    #         else:
-    #             self.connecting_pars[hostaddr] = \
-    #                 Participant(address, out_socket=client_out_socket)
 
     def run(self):
         """
@@ -193,8 +157,5 @@ class BroadcastServer(threading.Thread):
         """
         for par_id, par in self.participants.items():
             if par != sender_par:
-                # if True:  # TODO delete it (just for debugging)!
                 with par.lock:
                     par.in_socket.send(packet)  # TODO maybe use sendall
-                    # send_packet(par.in_socket, sender_par.id)
-                    # send_packet(par.in_socket, data)
