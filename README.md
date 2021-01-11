@@ -10,4 +10,4 @@ So far I have made the following features, all of them work between multiple use
 - Painting on a smart board, which also detects lines and rectangles
 - Writing in a "remote" window (currently notepad, reflects the text that each user writes to all the others)
 
-![alt text](screenshots/screenshot11.1.jpeg?raw=true)
+![alt text](screenshots/screenshot11.1.png?raw=true)
