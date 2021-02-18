@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import numpy as np
 from constants import DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT
-from client.video.basic_tcp_video_client import BasicTcpVideoClient
+from client.video.basic_udp_video_client import BasicUdpVideoClient
 from GUI.video_grid.client_video_widget import ClientVideoWidget
 
 
@@ -18,7 +18,8 @@ class VideoGrid(QtWidgets.QFrame):
     NEW_WIDGETS_POS = ((0, 0), (0, 1), (1, 0), (1, 1))
     MAX_VIDEO_WIDGETS = len(NEW_WIDGETS_POS)
 
-    def __init__(self, video_client: BasicTcpVideoClient, parent: QtWidgets.QWidget):
+    def __init__(self, video_client: BasicUdpVideoClient,
+                 parent: QtWidgets.QWidget):
         """ Constructor. """
         super(VideoGrid, self).__init__(parent)
         self.video_client = video_client

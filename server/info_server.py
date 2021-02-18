@@ -14,10 +14,14 @@ class InfoServer(BroadcastTcpServer):
 
     next_client_id = 0
 
-    def __init__(self, ip: str, client_in_port: int, client_out_port: int):
+    def __init__(self, ip: str, client_in_port: int,
+                 client_out_port: int, client_disconnected_callback):
         """ Constructor. """
         super(InfoServer, self).__init__(ip, client_in_port,
                                          client_out_port, 'info')
+
+        # this is a callback function in the main server
+        self.client_disconnected_callback = client_disconnected_callback
 
         # these messages are related to the current sharing
         # (screen sharing / smart board / remote window)
@@ -97,7 +101,7 @@ class InfoServer(BroadcastTcpServer):
         for msg in self.last_status_msgs:
             msg_name, msg_data = msg
             # if the client who left was sharing screen / painting
-            # inform all the  participants that he has stopped sharing
+            # inform all the participants that he has stopped sharing
             if par.id == msg_data:
                 msgs_to_remove.append(msg)
                 if msg_name in Info.OPPOSITE_MSGS:
@@ -110,3 +114,6 @@ class InfoServer(BroadcastTcpServer):
         # inform all the others participants that he left
         msg = (Info.CLIENT_LEFT, par.id)
         self.broadcast_info_msg(par, msg)
+
+        # inform the main server that that client has disconnected
+        self.client_disconnected_callback(par.id)

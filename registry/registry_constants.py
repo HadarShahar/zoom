@@ -6,6 +6,8 @@
 
 SERVER_IP = '127.0.0.1'        # the server ip
 
+AUTH_SERVER_PORT = 7231        # the port of the auth server socket
+
 CLIENT_IN_INFO_PORT = 7232     # the port of the client's input info socket
 CLIENT_OUT_INFO_PORT = 7233    # the port of the client's output info socket
 

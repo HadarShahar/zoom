@@ -4,3 +4,8 @@ opencv-python
 pillow
 pyaudio
 uiautomation
+
+requests
+twilio
+Flask
+python-dotenv

@@ -10,6 +10,8 @@ from GUI.gui_constants import *
 class ControlsBarFrame(QtWidgets.QFrame):
     """ Definition of the class ControlsBarFrame. """
 
+    HEIGHT = 55
+
     def __init__(self, parent: QtWidgets.QWidget,
                  is_audio_on: bool, is_video_on: bool):
         """ Constructor. """
@@ -20,7 +22,7 @@ class ControlsBarFrame(QtWidgets.QFrame):
         size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                             QtWidgets.QSizePolicy.Preferred)
         self.setSizePolicy(size_policy)
-        self.setFixedHeight(55)
+        self.setFixedHeight(ControlsBarFrame.HEIGHT)
 
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 10, 0)  # left, top, right, bottom

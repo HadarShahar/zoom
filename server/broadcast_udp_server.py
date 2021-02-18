@@ -7,7 +7,7 @@ import sys
 import threading
 import struct
 from constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
-    UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG, EXIT_SIGN
+    UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG
 
 
 class BroadcastUdpServer(threading.Thread):
@@ -66,7 +66,7 @@ class BroadcastUdpServer(threading.Thread):
                 if content.startswith(UDP_NEW_CLIENT_MSG):
                     self.clients_addresses[client_id] = client_address
                     print(f'{self.server_name} participants: '
-                          f'{self.clients_addresses}')
+                          f'{self.clients_addresses.keys()}')
                 else:
                     print('malformed packet.')
 
@@ -81,3 +81,12 @@ class BroadcastUdpServer(threading.Thread):
         for client_id, client_in_address in self.clients_addresses.items():
             if client_id != sender_id:
                 self.out_socket.sendto(packet, client_in_address)
+
+    def client_disconnected(self, client_id: bytes):
+        """
+        The main server calls this function when a client disconnects.
+        It removes it from clients_addresses.
+        """
+        del self.clients_addresses[client_id]
+        print(f'{self.server_name} participants: '
+              f'{self.clients_addresses.keys()}')

@@ -10,8 +10,7 @@ from GUI.chat.chat_recipients import ChatRecipients
 from client.chat_client import ChatClient
 from custom_messages.chat_msg import ChatMsg
 
-from registry.registry_constants import \
-    SERVER_IP, CLIENT_IN_CHAT_PORT, CLIENT_OUT_CHAT_PORT
+from constants import SERVER_IP, CLIENT_IN_CHAT_PORT, CLIENT_OUT_CHAT_PORT
 
 
 class ChatWindow(QtWidgets.QWidget):

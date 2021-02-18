@@ -5,7 +5,6 @@
 from PyQt5 import QtWidgets, QtGui, uic
 import numpy as np
 import sys
-import threading
 
 # add the parent directory to the "module search path"
 # in order to import files from other folders
@@ -256,15 +255,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 return False
         return True
 
-    def can_toggle(self, widget: ToggleWidget) -> bool:
-        """
-        Returns True if the screen/smart_board/remote_window sharing widget
-        can switch its state, False otherwise.
-        """
-        if widget.is_on:
-            return True
-        return self.can_start_sharing()
-
     def toggle_share_screen(self):
         """ Toggles the screen sharing. """
         toggled = self.toggle_sharing(
@@ -299,9 +289,10 @@ class MainWindow(QtWidgets.QMainWindow):
         :param ui_widget: The widget in the ui.
         :param start_msg: The info message to send when start sharing.
         :param stop_msg:  The info message to send when stop sharing.
+        :param stop_msg:  The info message to send when stop sharing.
         :return: True if the toggle widget was toggled, False otherwise
         """
-        if self.can_toggle(toggle_widget):
+        if toggle_widget.is_on or self.can_start_sharing():
             if toggle_widget.is_on:
                 self.info_client.send_info_msg((stop_msg, self.id))
                 ui_widget.hide()
@@ -322,7 +313,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def exit(self):
         """ Closes the clients and the gui. """
-        print('active threads:', threading.active_count())
         for client in self.clients:
             client.close()
         self.close()  # close the gui

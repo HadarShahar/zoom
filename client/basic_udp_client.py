@@ -69,14 +69,8 @@ class BasicUdpClient(BasicClient, ABC):
 
     def close(self):
         """
-        Sends the server EXIT_SIGN (if the output socket is open)
-        and closes the sockets.
+        Closes the sockets.
         """
         super(BasicUdpClient, self).close()
-        # TODO send exit sign
-        # # if self.out_socket.fileno() != -1:
-        # # fileno() will return -1 for closed sockets.
-        # if not self.out_socket._closed:
-        #     send_packet(self.out_socket, EXIT_SIGN)
         self.in_socket.close()
         self.out_socket.close()

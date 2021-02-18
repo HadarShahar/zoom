@@ -23,22 +23,21 @@ class UdpPacketsHandler:
         If all the packets were collected, returns the full frame.
         Otherwise, returns None.
         """
-        # if it's the first packet, or just a more recent packet,
-        # drop all the packets collected so far
-        if self.current_frame_index is None or \
-                p.frame_index > self.current_frame_index:
+        full_frame = b''
 
-            # just for debugging
-            if self.remaining_packets != 0:
-                dropped = len(self.packets_data) - self.packets_data.count(b'')
-                print(f'A more recent packet received, dropping '
-                      f'{dropped}/{len(self.packets_data)} packets.')
+        # if it's the first packet, or just a more recent packet,
+        # drop all the packets collected so far, or fill the missing packets
+        is_first_packet = self.current_frame_index is None
+        if is_first_packet or p.frame_index > self.current_frame_index:
+
+            if not is_first_packet and self.remaining_packets != 0:
+                full_frame = self.handle_missing_packets()
 
             self.current_frame_index = p.frame_index
             self.packets_data = [b''] * p.num_packets
             self.remaining_packets = p.num_packets
 
-        # if the frame is too old, drop it
+        # if the packet is too old, drop it
         if p.frame_index < self.current_frame_index:
             print('Frame is too old, dropping it.')
             return None
@@ -48,7 +47,33 @@ class UdpPacketsHandler:
         self.remaining_packets -= 1
 
         if self.remaining_packets == 0:
+            full_frame = b''.join(self.packets_data)
+
+        return full_frame if full_frame else None
+
+    def handle_missing_packets(self) -> bytes:
+        """
+
+        :return:
+        """
+        num_packets = len(self.packets_data)
+        received = num_packets - self.packets_data.count(b'')
+        received_percent = received / num_packets
+        print_percent = f'{received}/{num_packets} ({received_percent:.2f})'
+
+        if received_percent > self.RECEIVED_PACKETS_THRESHOLD:
+            self.fill_missing_packets()
+            print(f'Received {print_percent} packets, filling the rest.')
             return b''.join(self.packets_data)
+
+        print(f'A more recent packet received, dropping '
+              f'{print_percent} packets.')
+        return b''
+
+    def fill_missing_packets(self):
+        for i in range(1, len(self.packets_data)):
+            if self.packets_data[i] == b'':
+                self.packets_data[i] = self.packets_data[i-1]
 
     @staticmethod
     def create_packets(frame_index: int, data: bytes) -> list:
