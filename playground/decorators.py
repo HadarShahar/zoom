@@ -27,6 +27,21 @@ def catch_exception(func):
     return wrapper_catch_exception
 
 
+from flask import request
+from functools import wraps
+
+
+def assert_params_exist(*params):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(self, *f_args):
+            missing = [p for p in params if p not in request.get_json()]
+            if missing:
+                return 'Missing required params: ' + ', '.join(missing)
+            return f(self, params)
+        return wrapped
+    return wrapper
+
 # with callback (isn't working for self.method)
 # def catch_exception(callback=None):
 #     """

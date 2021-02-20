@@ -9,6 +9,7 @@ import numpy as np
 from constants import DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT
 from client.video.basic_udp_video_client import BasicUdpVideoClient
 from GUI.video_grid.client_video_widget import ClientVideoWidget
+from custom_messages.client_info import ClientInfo
 
 
 class VideoGrid(QtWidgets.QFrame):
@@ -39,8 +40,7 @@ class VideoGrid(QtWidgets.QFrame):
         """
         return self.video_widgets.get(client_id)
 
-    def add_video_widget(self, client_id: bytes, client_name: str,
-                         is_audio_on: bool, is_video_on: bool) -> bool:
+    def add_video_widget(self, client_info: ClientInfo) -> bool:
         """
         Creates a new ClientVideoWidget object and adds it to the grid.
         Returns True if it was added, False otherwise.
@@ -50,9 +50,8 @@ class VideoGrid(QtWidgets.QFrame):
             print("can't add a new video widget")
             return False
 
-        video_widget = ClientVideoWidget(self, client_id, client_name,
-                                         is_audio_on, is_video_on)
-        self.video_widgets[client_id] = video_widget
+        video_widget = ClientVideoWidget(self, client_info)
+        self.video_widgets[client_info.id] = video_widget
 
         pos = VideoGrid.NEW_WIDGETS_POS[widgets_count]
         self.layout.addWidget(video_widget, *pos)

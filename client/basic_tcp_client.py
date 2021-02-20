@@ -31,11 +31,7 @@ class BasicTcpClient(BasicClient, ABC):
             sys.exit(1)
 
     def update_id(self):
-        """
-        This method sends the id to the server,
-        but the InfoClient overrides this method and
-        receives the id from the server.
-        """
+        """ Sends the id to the server. """
         send_packet(self.out_socket, self.id)
 
     def close(self):

@@ -4,9 +4,13 @@
 """
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import pyqtSignal
+import requests
+import threading
 import numpy as np
+import cv2
 from GUI.widgets.basic_video_widget import BasicVideoWidget
+from custom_messages.client_info import ClientInfo
 
 
 class ClientVideoWidget(BasicVideoWidget):
@@ -20,29 +24,34 @@ class ClientVideoWidget(BasicVideoWidget):
     IMG_WIDTH = IMG_HEIGHT = 20
     RED_MIC_PATH = 'images/red_mic.png'  # TODO path to images
 
-    def __init__(self, parent: QtWidgets.QWidget, client_id: bytes, client_name: str,
-                 is_audio_on: bool, is_video_on: bool):
+    def __init__(self, parent: QtWidgets.QWidget, client_info: ClientInfo):
         """ Initializes the different widgets inside the ClientVideoWidget. """
         super(ClientVideoWidget, self).__init__(parent)
 
-        self.client_id = client_id
-        self.client_name = client_name
-        self.is_audio_on = is_audio_on
-        self.is_video_on = is_video_on
+        self.client_info = client_info
+        self.is_audio_on = client_info.is_audio_on
+        self.is_video_on = client_info.is_video_on
 
-        # size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.default_img_pixmap = None
+        if client_info.img_url:
+            threading.Thread(target=self.download_default_img,
+                             args=(client_info.img_url,)).start()
+
+        # size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+        # QtWidgets.QSizePolicy.Preferred)
         # size_policy.setHeightForWidth(True)
         # self.setSizePolicy(size_policy)
 
         self.setStyleSheet(self.BORDER_STYLE)
-        self.setText(self.client_name)
+        self.setText(self.client_info.name)
 
         self.bottom_frame = QtWidgets.QFrame(self)
         self.bottom_frame.setMinimumSize(self.IMG_WIDTH, self.IMG_HEIGHT)
         self.bottom_frame.setStyleSheet(self.NO_BORDER_STYLE)
 
         horizontal_layout = QtWidgets.QHBoxLayout()
-        horizontal_layout.setContentsMargins(0, 0, 0, 0)  # left, top, right, bottom
+        horizontal_layout.setContentsMargins(0, 0, 0,
+                                             0)  # left, top, right, bottom
         horizontal_layout.setSpacing(0)
         self.red_mic = QtWidgets.QLabel(self.bottom_frame)
         self.red_mic.setPixmap(QPixmap(self.RED_MIC_PATH))
@@ -50,7 +59,8 @@ class ClientVideoWidget(BasicVideoWidget):
         self.red_mic.setScaledContents(True)
         horizontal_layout.addWidget(self.red_mic)
 
-        self.name_label = QtWidgets.QLabel(f'  {self.client_name}  ', self.bottom_frame)
+        self.name_label = QtWidgets.QLabel(f'  {self.client_info.name}  ',
+                                           self.bottom_frame)
         horizontal_layout.addWidget(self.name_label)
         self.bottom_frame.setLayout(horizontal_layout)
 
@@ -77,7 +87,8 @@ class ClientVideoWidget(BasicVideoWidget):
         at the bottom of the widget according to
         is_audio_on and is_video_on.
         """
-        if self.is_audio_on and not self.is_video_on:
+        if self.is_audio_on and not self.is_video_on and \
+                self.default_img_pixmap is None:
             self.bottom_frame.hide()
         else:
             self.bottom_frame.show()
@@ -90,8 +101,11 @@ class ClientVideoWidget(BasicVideoWidget):
         if self.is_video_on:
             self.name_label.show()
         else:
-            self.name_label.hide()
-            self.setText(self.client_name)
+            if self.default_img_pixmap is None:
+                self.name_label.hide()
+                self.setText(self.client_info.name)
+            else:
+                self.setPixmap(self.default_img_pixmap)
 
         self.bottom_frame.adjustSize()
 
@@ -100,27 +114,15 @@ class ClientVideoWidget(BasicVideoWidget):
         This function is called when the widget is resized.
         It moves the bottom frame to the bottom of the widget.
         """
-        # if self.width() > self.height():
-        #     # DEFAULT_VIDEO_WIDTH  DEFAULT_VIDEO_HEIGHT
-        #     #          ?                  height
-        #     self.setMaximumWidth(self.height() * DEFAULT_VIDEO_WIDTH / DEFAULT_VIDEO_HEIGHT)
-        # else:
-        #     # DEFAULT_VIDEO_WIDTH  DEFAULT_VIDEO_HEIGHT
-        #     #       width                  ?
-        #     self.setMaximumHeight(self.width() * DEFAULT_VIDEO_HEIGHT / DEFAULT_VIDEO_WIDTH)
-
         # p = QPixmap(DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT)
         # p = p.scaled(self.width(), self.height(), Qt.KeepAspectRatio)
         # print(p.size(), self.size())
 
         self.bottom_frame.move(self.BORDER_SIZE,
-                               self.height() - self.IMG_HEIGHT - self.BORDER_SIZE)
+                               self.height()-self.IMG_HEIGHT-self.BORDER_SIZE)
 
-    # def hasHeightForWidth(self):
-    #     return True
-    #
-    # def heightForWidth(self, w: int) -> int:
-    #     val = super(VideoWidget, self).heightForWidth(w)
-    #     new_val = w * DEFAULT_VIDEO_HEIGHT // DEFAULT_VIDEO_WIDTH
-    #     print(w, val, new_val)
-    #     return new_val
+    def download_default_img(self, url: str):
+        content = requests.get(url).content
+        nparr = np.frombuffer(content, dtype=np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        self.default_img_pixmap = self.convert_cv2pixmap(frame, scale=False)

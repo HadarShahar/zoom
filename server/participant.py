@@ -3,6 +3,7 @@
     Participant.
 """
 import threading
+from custom_messages.client_info import ClientInfo
 
 
 class Participant(object):
@@ -22,9 +23,11 @@ class Participant(object):
         self.is_audio_on = is_audio_on
         self.is_video_on = is_video_on
 
-    def get_info(self) -> tuple:
+    def get_info(self) -> ClientInfo:
         """ Returns the info that the info server needs. """
-        return self.id, self.name, self.is_audio_on, self.is_video_on
+        return ClientInfo(self.id, self.name,
+                          is_audio_on=self.is_audio_on,
+                          is_video_on=self.is_video_on)
 
     def done_connecting(self) -> bool:
         """

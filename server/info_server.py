@@ -12,8 +12,6 @@ from server.participant import Participant
 class InfoServer(BroadcastTcpServer):
     """ Definition of the class InfoServer. """
 
-    next_client_id = 0
-
     def __init__(self, ip: str, client_in_port: int,
                  client_out_port: int, client_disconnected_callback):
         """ Constructor. """
@@ -29,16 +27,7 @@ class InfoServer(BroadcastTcpServer):
         self.last_status_msgs = []
 
     def update_par_id(self, par: Participant):
-        """
-        Receives the client name, and send the client its id.
-        Then updates the info between all the clients.
-        """
-        par.name = recv_packet(par.out_socket).decode()
-
-        InfoServer.next_client_id += 1
-        par.id = str(InfoServer.next_client_id).encode()
-        send_packet(par.in_socket, par.id)
-
+        super(InfoServer, self).update_par_id(par)
         self.update_info(par)
 
     def update_info(self, new_par: Participant):

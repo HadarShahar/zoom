@@ -32,14 +32,13 @@ class BasicVideoWidget(QtWidgets.QLabel):
         pixmap = self.convert_cv2pixmap(frame)
         self.setPixmap(pixmap)
 
-    def convert_cv2pixmap(self, cv_img: np.ndarray) -> QPixmap:
+    def convert_cv2pixmap(self, cv_img: np.ndarray, scale=True) -> QPixmap:
         """ Converts an opencv image to QPixmap. """
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
 
-        # bytes_per_line = ch * w
-        # q_img = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
         q_img = QImage(rgb_image, w, h, QImage.Format_RGB888)
-
-        q_img = q_img.scaled(self.width(), self.height(), Qt.KeepAspectRatio)
+        if scale:
+            q_img = q_img.scaled(self.width(), self.height(),
+                                 Qt.KeepAspectRatio)
         return QPixmap.fromImage(q_img)

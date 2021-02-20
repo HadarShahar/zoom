@@ -16,28 +16,11 @@ class InfoClient(BasicTcpClient):
 
     new_info = pyqtSignal(tuple)
 
-    def __init__(self, ip: str, in_socket_port: int, out_socket_port: int):
+    def __init__(self, ip: str, in_socket_port: int,
+                 out_socket_port: int, client_id: bytes):
         """ Constructor. """
-        # this id is just for the BasicClient constructor,
-        # it will change when the overridden method update_id() will be called.
-        temporary_id = b''
         super(InfoClient, self).__init__(ip, in_socket_port,
-                                         out_socket_port, temporary_id)
-
-        self.clients_info = {}  # {client_id: client_name}
-
-    def update_id(self):
-        """
-        Sends the client name to the server,
-        and receives the client id from the server.
-        """
-        self.name = ''
-        while self.name == '':
-            self.name = input('Enter your name: ')
-        send_packet(self.out_socket, self.name.encode())
-
-        self.id = bytes(recv_packet(self.in_socket))
-        print('my id:', self.id)
+                                         out_socket_port, client_id)
 
     def send_data_loop(self):
         """
@@ -56,22 +39,6 @@ class InfoClient(BasicTcpClient):
 
             # emit a signal indicating that new info was received
             self.new_info.emit(full_msg)
-
-            msg_name, msg_data = full_msg
-            if msg_name == Info.NEW_CLIENT:
-                client_id, client_name, _, _ = msg_data
-                self.clients_info[client_id] = client_name
-            elif msg_name == Info.CLIENTS_INFO:
-                # in this case msg_data is a list ot tuples
-                for client_id, client_name, _, _ in msg_data:
-                    self.clients_info[client_id] = client_name
-            elif msg_name == Info.CLIENT_LEFT:
-                # in this case msg_data = client_id
-                del self.clients_info[msg_data]
-            else:
-                continue
-
-            print('clients_info:', self.clients_info)
 
     def send_toggle_msg(self, toggle_type: int):
         """ Sends a toggle message of a given type. """

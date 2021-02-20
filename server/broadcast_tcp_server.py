@@ -102,9 +102,7 @@ class BroadcastTcpServer(threading.Thread):
     def update_par_id(self, par: Participant):
         """
         Updates the participant id.
-        This method receives the id from the client,
-        but the InfoServer overrides this method and
-        assigns an id to the client.
+        This method receives the id from the client.
         """
         par.id = bytes(recv_packet(par.out_socket))
 

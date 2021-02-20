@@ -48,8 +48,8 @@ class Info:
 
     message name         , message data
     ================================================================================================
-    NEW_CLIENT           , (client_id: bytes, client_name: str, is_audio_on: bool, is_video_on: bool)
-    CLIENTS_INFO         , [(client_id: bytes, client_name: str, is_audio_on: bool, is_video_on: bool),...]
+    NEW_CLIENT           , ClientInfo(...)
+    CLIENTS_INFO         , [ClientInfo(...), ... ]
     CLIENT_LEFT          , client_id: bytes
 
     TOGGLE_AUDIO         , client_id: bytes

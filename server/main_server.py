@@ -23,7 +23,7 @@ class MainServer(object):
 
     def __init__(self, ip: str):
         """ Initializes the servers. """
-        self.auth_server = AuthServer(ip, AUTH_SERVER_PORT)
+        self.auth_server = AuthServer(AUTH_SERVER_PORT)
 
         self.info_server = InfoServer(
             ip, CLIENT_IN_INFO_PORT, CLIENT_OUT_INFO_PORT,
