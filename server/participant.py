@@ -3,14 +3,13 @@
     Participant.
 """
 import threading
-from custom_messages.client_info import ClientInfo
 
 
 class Participant(object):
     """ Definition of the class Participant. """
 
     def __init__(self, address: (str, int), in_socket=None, out_socket=None,
-                 par_id=b'', name='', is_audio_on=True, is_video_on=True):
+                 par_id=b''):
         """ Constructor. """
         self.address = address
         self.in_socket = in_socket
@@ -18,16 +17,8 @@ class Participant(object):
         self.id = par_id  # in bytes
         self.lock = threading.Lock()
 
-        # these are only used by the info server
-        self.name = name
-        self.is_audio_on = is_audio_on
-        self.is_video_on = is_video_on
-
-    def get_info(self) -> ClientInfo:
-        """ Returns the info that the info server needs. """
-        return ClientInfo(self.id, self.name,
-                          is_audio_on=self.is_audio_on,
-                          is_video_on=self.is_video_on)
+        # client_info is only used by the info server
+        self.client_info = None
 
     def done_connecting(self) -> bool:
         """

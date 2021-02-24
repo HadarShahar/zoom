@@ -16,7 +16,8 @@ class AuthServer(threading.Thread):
     GOOGLE_USER_INFO_ENDPOINT = \
         'https://www.googleapis.com/oauth2/v3/userinfo?access_token={}'
 
-    next_client_id = 0
+    # next_client_id = 0
+    CLIENT_ID_LEN = 8  # in bytes
 
     def __init__(self, port: int):
         """ Constructor. """
@@ -55,7 +56,7 @@ class AuthServer(threading.Thread):
                 if access_token:
                     user_info = self.get_user_info(access_token)
                     client_info = {
-                        'id': AuthServer.generate_client_id(),
+                        'id': AuthServer.generate_client_id().hex(),
                         'name': user_info['name'],
                         # google returns the img url in the picture attribute
                         'img_url': user_info['picture']
@@ -72,7 +73,7 @@ class AuthServer(threading.Thread):
         name = content.get('name')
         if name:
             client_info = {
-                'id': AuthServer.generate_client_id(),
+                'id': AuthServer.generate_client_id().hex(),
                 'name': name,
                 'img_url': ''
             }
@@ -91,9 +92,12 @@ class AuthServer(threading.Thread):
         return r.json().get('access_token', None)
 
     @staticmethod
-    def generate_client_id() -> str:
-        AuthServer.next_client_id += 1
-        return str(AuthServer.next_client_id)
+    def generate_client_id() -> bytes:
+        """
+        """
+        # AuthServer.next_client_id += 1
+        # return str(AuthServer.next_client_id)
+        return os.urandom(AuthServer.CLIENT_ID_LEN)
 
     @staticmethod
     def get_user_info(access_token: str) -> dict:

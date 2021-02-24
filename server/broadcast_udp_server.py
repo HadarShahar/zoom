@@ -87,6 +87,7 @@ class BroadcastUdpServer(threading.Thread):
         The main server calls this function when a client disconnects.
         It removes it from clients_addresses.
         """
-        del self.clients_addresses[client_id]
+        if client_id in self.clients_addresses:
+            del self.clients_addresses[client_id]
         print(f'{self.server_name} participants: '
               f'{self.clients_addresses.keys()}')

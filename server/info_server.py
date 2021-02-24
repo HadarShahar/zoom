@@ -27,23 +27,28 @@ class InfoServer(BroadcastTcpServer):
         self.last_status_msgs = []
 
     def update_par_id(self, par: Participant):
-        super(InfoServer, self).update_par_id(par)
-        self.update_info(par)
-
-    def update_info(self, new_par: Participant):
         """
-        Updates the info between the new client
+        Updates the participant's id and info and
+        calls the function sync_info.
+        """
+        super(InfoServer, self).update_par_id(par)
+        par.client_info = pickle.loads(recv_packet(par.out_socket))
+        self.sync_info(par)
+
+    def sync_info(self, new_par: Participant):
+        """
+        Synchronizes the info between the new client
         and the other clients in the meeting.
         """
         # send the other clients info to the new client
         msg = (Info.CLIENTS_INFO,
-               [p.get_info() for p in self.participants.values()])
+               [p.client_info for p in self.participants.values()])
         # send the last messages (related to sharing) to the new client
         for m in [msg] + self.last_status_msgs:
             send_packet(new_par.in_socket, pickle.dumps(m))
 
         # inform all the other clients that a new client has connected
-        msg = (Info.NEW_CLIENT, new_par.get_info())
+        msg = (Info.NEW_CLIENT, new_par.client_info)
         self.broadcast_info_msg(new_par, msg)
 
     def broadcast_info_msg(self, sender_par: Participant, msg: tuple):
@@ -60,9 +65,9 @@ class InfoServer(BroadcastTcpServer):
         """
         msg_name, msg_data = pickle.loads(data)
         if msg_name == Info.TOGGLE_AUDIO:
-            par.is_audio_on = not par.is_audio_on
+            par.client_info.is_audio_on = not par.client_info.is_audio_on
         elif msg_name == Info.TOGGLE_VIDEO:
-            par.is_video_on = not par.is_video_on
+            par.client_info.is_video_on = not par.client_info.is_video_on
 
         elif msg_name in Info.OPPOSITE_MSGS:
             self.last_status_msgs.append((msg_name, msg_data))

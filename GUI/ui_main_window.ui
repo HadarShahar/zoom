@@ -110,8 +110,8 @@
             <property name="bottomMargin">
              <number>0</number>
             </property>
-            <item row="2" column="1">
-             <spacer name="verticalSpacer_3">
+            <item row="0" column="1">
+             <spacer name="verticalSpacer_4">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
@@ -142,8 +142,8 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="1">
-             <spacer name="verticalSpacer_4">
+            <item row="2" column="1">
+             <spacer name="verticalSpacer_3">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>

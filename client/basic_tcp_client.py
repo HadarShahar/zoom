@@ -24,14 +24,14 @@ class BasicTcpClient(BasicClient, ABC):
             self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.out_socket.connect((ip, out_socket_port))
 
-            self.update_id()
+            self.introduce()
 
         except socket.error as msg:  # TODO nice exit
             print('Connection failure: %s\n terminating program' % msg)
             sys.exit(1)
 
-    def update_id(self):
-        """ Sends the id to the server. """
+    def introduce(self):
+        """ Introduces this client to the server by sending its id. """
         send_packet(self.out_socket, self.id)
 
     def close(self):

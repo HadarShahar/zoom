@@ -63,7 +63,7 @@ class ChatWindow(QtWidgets.QWidget):
         recipient_id = self.recipients.item(current_index).data()
 
         msg = ChatMsg(self.client_id, recipient_id, text)
-        msg.add_timestamp()  # TODO maybe do it on the server
+        msg.add_timestamp()
 
         self.client.send_msg(msg)
         self.show_chat_msg(msg)

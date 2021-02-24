@@ -75,9 +75,10 @@ def assert_params_exist(*params):
 
 class Test(object):
     @catch_exception
-    def __init__(self):
+    def __init__(self, n):
+        print(n)
         self.n = 0 / 0
 
 
 if __name__ == '__main__':
-    t = Test()
+    t = Test(21)

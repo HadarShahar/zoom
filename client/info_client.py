@@ -2,12 +2,14 @@
     Hadar Shahar
     The info client code.
 """
+from typing import Union
 import pickle
 from PyQt5.QtCore import pyqtSignal
 from tcp_network_protocol import send_packet, recv_packet
 from constants import Info
 from client.basic_tcp_client import BasicTcpClient
 from custom_messages.painting import Painting
+from custom_messages.client_info import ClientInfo
 from custom_messages.remote_window_msg import RemoteWindowMsg
 
 
@@ -17,10 +19,21 @@ class InfoClient(BasicTcpClient):
     new_info = pyqtSignal(tuple)
 
     def __init__(self, ip: str, in_socket_port: int,
-                 out_socket_port: int, client_id: bytes):
+                 out_socket_port: int, client_info: ClientInfo):
         """ Constructor. """
+        # # NOTE: this line must be before the super call, because the parent
+        # # constructor calls the overridden introduce() which uses client_info.
+        # self.client_info = client_info
         super(InfoClient, self).__init__(ip, in_socket_port,
-                                         out_socket_port, client_id)
+                                         out_socket_port, client_info.id)
+        # send all the client info to the server
+        self.send_info_msg(client_info)
+
+    # def introduce(self):
+    #     """
+    #     This function overrides the ...
+    #     """
+    #     self.send_info_msg(self.client_info)
 
     def send_data_loop(self):
         """
@@ -52,7 +65,7 @@ class InfoClient(BasicTcpClient):
         """ Sends a given remote window message. """
         self.send_info_msg((Info.REMOTE_WINDOW_MSG, msg))
 
-    def send_info_msg(self, msg: tuple):
+    def send_info_msg(self, msg: Union[tuple, ClientInfo]):
         """ Sends a given info message. """
         send_packet(self.out_socket, pickle.dumps(msg))
 

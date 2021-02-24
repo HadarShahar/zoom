@@ -23,4 +23,6 @@ class ClientInfo(object):
     @classmethod
     def from_json(cls, json: dict):
         """ Factory method which creates an object from json. """
-        return cls(json['id'].encode(), json['name'], json.get('img_url', ''))
+        # the client id is represented as hex digits in the json object
+        client_id = bytes.fromhex(json['id'])
+        return cls(client_id, json['name'], json.get('img_url', ''))

@@ -65,7 +65,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.create_smart_board()
         self.init_remote_window()
 
+        # after the clients and all the gui objects have been created,
+        # connect the clients' signals to the gui objects
         self.connect_clients()
+
+        print('finish_loading')
         self.finish_loading.emit()
 
     def init_clients(self):
@@ -76,7 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # ================================================= info
         self.info_client = InfoClient(
             SERVER_IP, CLIENT_IN_INFO_PORT, CLIENT_OUT_INFO_PORT,
-            self.client_info.id)
+            self.client_info)
         # ================================================= video
         self.video_client = CameraClient(
             SERVER_IP, CLIENT_IN_VIDEO_PORT, CLIENT_OUT_VIDEO_PORT,
