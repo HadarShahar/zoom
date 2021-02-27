@@ -7,7 +7,6 @@ import threading
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from GUI.gui_constants import *
 from GUI.main_window import MainWindow
-from constants import SERVER_IP, AUTH_SERVER_PORT
 from client.auth.auth_client import AuthClient
 from custom_messages.client_info import ClientInfo
 from GUI.gui_constants import OPENING_WINDOW_UI_FILE_PATH, LOADING_GIF_PATH
@@ -21,7 +20,7 @@ class OpeningWindow(QtWidgets.QWidget):
         uic.loadUi(OPENING_WINDOW_UI_FILE_PATH, self)
         self.setWindowTitle("Hadar's Zoom")
 
-        self.auth_client = AuthClient(SERVER_IP, AUTH_SERVER_PORT)
+        self.auth_client = AuthClient()
         self.auth_client.start()
         self.google_sign_in_button.clicked.connect(
             self.auth_client.google_sign_in)

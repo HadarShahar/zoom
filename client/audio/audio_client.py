@@ -2,6 +2,7 @@
     Hadar Shahar
     The audio client code.
 """
+from client.network_constants import Constants
 from client.basic_udp_client import BasicUdpClient
 from client.audio.audio_stream import AudioStream
 
@@ -9,11 +10,11 @@ from client.audio.audio_stream import AudioStream
 class AudioClient(BasicUdpClient):
     """ Definition of the class AudioClient. """
 
-    def __init__(self, ip: str, in_socket_port: int, out_socket_port: int,
-                 client_id: bytes):
+    def __init__(self, client_id: bytes):
         """ Constructor. """
-        super(AudioClient, self).__init__(ip, in_socket_port, out_socket_port,
-                                          client_id)
+        super(AudioClient, self).__init__(
+            Constants.SERVER_IP, Constants.CLIENT_IN_AUDIO_PORT,
+            Constants.CLIENT_OUT_AUDIO_PORT, client_id)
         self.stream = AudioStream(input=True, output=True)
 
     def send_data_loop(self):

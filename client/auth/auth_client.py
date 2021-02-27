@@ -9,6 +9,7 @@ import hashlib
 import webbrowser
 from PyQt5.QtCore import QThread, pyqtSignal
 from custom_messages.client_info import ClientInfo
+from client.network_constants import Constants
 from client.auth.local_web_server import LocalWebServer
 
 
@@ -32,10 +33,11 @@ class AuthClient(QThread):
 
     error_signal = pyqtSignal(str, str)  # text, info_text
 
-    def __init__(self, ip: str, port: int):
+    def __init__(self):
         """ Constructor. """
         super(AuthClient, self).__init__()
-        self.server_url = f'http://{ip}:{port}'
+        self.server_url = \
+            f'http://{Constants.SERVER_IP}:{Constants.AUTH_SERVER_PORT}'
 
         self.local_web_server = LocalWebServer(self.handle_auth_code)
         self.state_token = b''

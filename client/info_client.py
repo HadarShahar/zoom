@@ -7,6 +7,7 @@ import pickle
 from PyQt5.QtCore import pyqtSignal
 from tcp_network_protocol import recv_packet
 from constants import Info
+from client.network_constants import Constants
 from client.basic_tcp_client import BasicTcpClient
 from custom_messages.painting import Painting
 from custom_messages.client_info import ClientInfo
@@ -18,14 +19,11 @@ class InfoClient(BasicTcpClient):
 
     new_info = pyqtSignal(tuple)
 
-    def __init__(self, ip: str, in_socket_port: int,
-                 out_socket_port: int, client_info: ClientInfo):
+    def __init__(self, client_info: ClientInfo):
         """ Constructor. """
-        # # NOTE: this line must be before the super call, because the parent
-        # # constructor calls the overridden introduce() which uses client_info.
-        # self.client_info = client_info
-        super(InfoClient, self).__init__(ip, in_socket_port,
-                                         out_socket_port, client_info.id)
+        super(InfoClient, self).__init__(
+            Constants.SERVER_IP, Constants.CLIENT_IN_INFO_PORT,
+            Constants.CLIENT_OUT_INFO_PORT, client_info.id)
 
         # send all the client info to the server
         self.send_info_msg(client_info)

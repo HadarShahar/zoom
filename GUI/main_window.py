@@ -11,7 +11,7 @@ import sys
 # in order to import files from other folders
 sys.path.insert(0, '..')
 
-from constants import *
+from constants import Info
 from GUI.gui_constants import *
 
 from GUI.controls_bar.controls_bar_frame import ControlsBarFrame
@@ -79,23 +79,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """ 
         Initializes the clients.
         """
-        # ================================================= info
-        self.info_client = InfoClient(
-            SERVER_IP, CLIENT_IN_INFO_PORT, CLIENT_OUT_INFO_PORT,
-            self.client_info)
-        # ================================================= video
-        self.video_client = CameraClient(
-            SERVER_IP, CLIENT_IN_VIDEO_PORT, CLIENT_OUT_VIDEO_PORT,
-            self.client_info.id)
-        # ================================================= share screen
-        self.share_screen_client = ShareScreenClient(
-            SERVER_IP, CLIENT_IN_SCREEN_PORT, CLIENT_OUT_SCREEN_PORT,
-            self.client_info.id)
-        # ================================================= audio
-        self.audio_client = AudioClient(
-            SERVER_IP, CLIENT_IN_AUDIO_PORT, CLIENT_OUT_AUDIO_PORT,
-            self.client_info.id)
-        # ================================================= start the clients
+        self.info_client = InfoClient(self.client_info)
+        self.video_client = CameraClient(self.client_info.id)
+        self.share_screen_client = ShareScreenClient(self.client_info.id)
+        self.audio_client = AudioClient(self.client_info.id)
+
         # must be a list because chat client will be added
         self.clients = [self.info_client, self.video_client,
                         self.share_screen_client, self.audio_client]

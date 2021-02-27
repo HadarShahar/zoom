@@ -9,8 +9,6 @@ from GUI.chat.msg_widget import MsgWidget
 from GUI.chat.chat_recipients import ChatRecipients
 from client.chat_client import ChatClient
 from custom_messages.chat_msg import ChatMsg
-
-from constants import SERVER_IP, CLIENT_IN_CHAT_PORT, CLIENT_OUT_CHAT_PORT
 from GUI.gui_constants import CHAT_WINDOW_UI_FILEPATH
 
 
@@ -23,8 +21,7 @@ class ChatWindow(QtWidgets.QWidget):
         uic.loadUi(CHAT_WINDOW_UI_FILEPATH, self)
         self.client_id = client_id
 
-        self.client = ChatClient(SERVER_IP, CLIENT_IN_CHAT_PORT,
-                                 CLIENT_OUT_CHAT_PORT, self.client_id)
+        self.client = ChatClient(self.client_id)
         self.client.new_msg.connect(self.show_chat_msg)
         self.client.start()
 

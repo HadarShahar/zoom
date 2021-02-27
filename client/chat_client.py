@@ -2,11 +2,12 @@
     Hadar Shahar
     The chat client code.
 """
+import pickle
 from PyQt5.QtCore import pyqtSignal
 from tcp_network_protocol import recv_packet
 from custom_messages.chat_msg import ChatMsg
+from client.network_constants import Constants
 from client.basic_tcp_client import BasicTcpClient
-import pickle
 
 
 class ChatClient(BasicTcpClient):
@@ -14,11 +15,11 @@ class ChatClient(BasicTcpClient):
 
     new_msg = pyqtSignal(ChatMsg)
 
-    def __init__(self, ip: str, in_socket_port: int,
-                 out_socket_port: int, client_id: bytes):
+    def __init__(self, client_id: bytes):
         """ Constructor. """
-        super(ChatClient, self).__init__(ip, in_socket_port,
-                                         out_socket_port, client_id)
+        super(ChatClient, self).__init__(
+            Constants.SERVER_IP, Constants.CLIENT_IN_CHAT_PORT,
+            Constants.CLIENT_OUT_CHAT_PORT, client_id)
 
     def send_data_loop(self):
         """
