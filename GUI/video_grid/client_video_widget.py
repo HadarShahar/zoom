@@ -1,6 +1,6 @@
 """
     Hadar Shahar
-
+    ClientVideoWidget.
 """
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
@@ -24,6 +24,9 @@ class ClientVideoWidget(BasicVideoWidget):
     IMG_WIDTH = IMG_HEIGHT = 20
     RED_MIC_PATH = 'images/red_mic.png'  # TODO path to images
 
+    # this signal is emitted after the default image has been downlaoded
+    default_img_downloaded = pyqtSignal()
+
     def __init__(self, parent: QtWidgets.QWidget, client_info: ClientInfo):
         """ Initializes the different widgets inside the ClientVideoWidget. """
         super(ClientVideoWidget, self).__init__(parent)
@@ -33,6 +36,9 @@ class ClientVideoWidget(BasicVideoWidget):
         self.is_video_on = client_info.is_video_on
 
         self.default_img_pixmap = None
+        self.default_img_downloaded.connect(
+            lambda: self.setPixmap(self.default_img_pixmap)
+        )
         if client_info.img_url:
             threading.Thread(target=self.download_default_img,
                              args=(client_info.img_url,)).start()
@@ -50,8 +56,8 @@ class ClientVideoWidget(BasicVideoWidget):
         self.bottom_frame.setStyleSheet(self.NO_BORDER_STYLE)
 
         horizontal_layout = QtWidgets.QHBoxLayout()
-        horizontal_layout.setContentsMargins(0, 0, 0,
-                                             0)  # left, top, right, bottom
+        horizontal_layout.setContentsMargins(
+            0, 0, 0, 0)  # left, top, right, bottom
         horizontal_layout.setSpacing(0)
         self.red_mic = QtWidgets.QLabel(self.bottom_frame)
         self.red_mic.setPixmap(QPixmap(self.RED_MIC_PATH))
@@ -118,11 +124,16 @@ class ClientVideoWidget(BasicVideoWidget):
         # p = p.scaled(self.width(), self.height(), Qt.KeepAspectRatio)
         # print(p.size(), self.size())
 
-        self.bottom_frame.move(self.BORDER_SIZE,
-                               self.height()-self.IMG_HEIGHT-self.BORDER_SIZE)
+        self.bottom_frame.move(
+            self.BORDER_SIZE, self.height()-self.IMG_HEIGHT-self.BORDER_SIZE)
 
     def download_default_img(self, url: str):
+        """
+        Downloads a default image from the given url,
+        and emits the signal default_img_download when finishes.
+        """
         content = requests.get(url).content
         nparr = np.frombuffer(content, dtype=np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         self.default_img_pixmap = self.convert_cv2pixmap(frame, scale=False)
+        self.default_img_downloaded.emit()

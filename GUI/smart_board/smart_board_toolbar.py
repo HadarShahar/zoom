@@ -10,9 +10,21 @@ from GUI.smart_board.slider import Slider
 class SmartBoardToolbar(QtWidgets.QFrame):
     """ Definition of the class SmartBoardToolbar. """
 
-    HEIGHT = 50
-    DEFAULT_PEN_COLOR = '#000000'  # black
+    BLACK_COLOR_HEX = '#000000'
+    WHITE_COLOR_HEX = '#FFFFFF'
+    BLUE_COLOR_HEX = '#0000FF'
+
+    HEIGHT = 50  # toolbar height
+    COLOR_PICKER_BTN_SIZE = (25, 25)  # width, height
+
+    # default horizontal spacer's size, doesn't need to be changed
+    DEFAULT_HSPACER_SIZE = (40, 20)  # width, height
+
+    DEFAULT_PEN_COLOR = BLUE_COLOR_HEX
+    PEN_WIDTH_RANGE = (1, 5)  # min, max
     DEFAULT_PEN_WIDTH = 3
+
+    # this signal is emitted when a color is selected
     new_color = pyqtSignal(str)
 
     def __init__(self, parent: QtWidgets.QWidget):
@@ -30,12 +42,13 @@ class SmartBoardToolbar(QtWidgets.QFrame):
         self.layout.addItem(self.default_hspacer())
 
         self.color_picker = QtWidgets.QPushButton(self)
-        self.color_picker.setFixedSize(25, 25)
+        self.color_picker.setFixedSize(*self.COLOR_PICKER_BTN_SIZE)
         self.color_picker.setStyleSheet(f'background-color: {self.pen_color};')
         self.color_picker.clicked.connect(self.pick_color)
         self.layout.addWidget(self.color_picker)
 
-        self.pen_width_slider = Slider(self, 'pen width', 1, 5)
+        self.pen_width_slider = Slider(self, 'pen width',
+                                       *self.PEN_WIDTH_RANGE)
         self.pen_width_slider.value_changed.connect(self.set_pen_width)
         self.layout.addWidget(self.pen_width_slider)
 
@@ -62,5 +75,6 @@ class SmartBoardToolbar(QtWidgets.QFrame):
     @staticmethod
     def default_hspacer() -> QtWidgets.QSpacerItem:
         """ Returns a new horizontal spacer item with the default values. """
-        return QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding,
+        return QtWidgets.QSpacerItem(*SmartBoardToolbar.DEFAULT_HSPACER_SIZE,
+                                     QtWidgets.QSizePolicy.Expanding,
                                      QtWidgets.QSizePolicy.Minimum)

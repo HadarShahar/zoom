@@ -19,7 +19,7 @@ VIDEO_HEIGHT = DEFAULT_VIDEO_HEIGHT / DIVIDER
 # the quality of the image from 0 to 100 (the higher is the better)
 JPEG_QUALITY = 80  # default is 95
 
-MSG_LEN = 4  # 8
+# MSG_LEN = 4  # 8
 CHUNK_SIZE = 1024
 EOF = b'-1'
 EXIT_SIGN = b'EXIT'

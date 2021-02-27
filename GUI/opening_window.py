@@ -4,21 +4,21 @@
 """
 import sys
 import threading
-from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from GUI.gui_constants import *
 from GUI.main_window import MainWindow
 from constants import SERVER_IP, AUTH_SERVER_PORT
 from client.auth.auth_client import AuthClient
 from custom_messages.client_info import ClientInfo
+from GUI.gui_constants import OPENING_WINDOW_UI_FILE_PATH, LOADING_GIF_PATH
 
 
 class OpeningWindow(QtWidgets.QWidget):
     """ Definition of the class OpeningWindow. """
-    UI_FILEPATH = 'ui_opening_window.ui'
 
     def __init__(self):
         super(OpeningWindow, self).__init__()
-        uic.loadUi(OpeningWindow.UI_FILEPATH, self)
+        uic.loadUi(OPENING_WINDOW_UI_FILE_PATH, self)
         self.setWindowTitle("Hadar's Zoom")
 
         self.auth_client = AuthClient(SERVER_IP, AUTH_SERVER_PORT)
@@ -27,6 +27,7 @@ class OpeningWindow(QtWidgets.QWidget):
             self.auth_client.google_sign_in)
         self.name_sign_in_button.clicked.connect(self.name_sign_in)
         self.no_name_error_label.hide()
+        self.loading_frame.hide()
 
         # QLineEdit will emit the signal returnPressed()
         # whenever the user presses the enter key while in it
@@ -39,6 +40,7 @@ class OpeningWindow(QtWidgets.QWidget):
         self.auth_client.recv_client_info_signal.connect(self.recv_client_info)
         self.auth_client.error_signal.connect(MainWindow.show_error_msg)
 
+        self.loading_gif.setMovie(QtGui.QMovie(LOADING_GIF_PATH))
         self.main_window = MainWindow()
         self.main_window.finish_loading.connect(self.start_main_window)
 
@@ -51,31 +53,36 @@ class OpeningWindow(QtWidgets.QWidget):
             self.no_name_error_label.show()
 
     def recv_client_info(self, client_info: ClientInfo):
+
         print('received_client_info:', client_info)
-        # self.bring_to_front()
-        # TODO loading animation
-        # threading.Thread(target=self.main_window.setup,
-        #                  args=(client_info,)).start()
-        # TODO fast loading
+        OpeningWindow.bring_win_to_front(self)
+
+        self.login_frame.hide()
+        self.loading_frame.show()
+        self.loading_gif.movie().start()
+
         self.main_window.setup(client_info)
-
-    def bring_to_front(self):
-        """
-        Brings this window to the front and acts like a "normal" window
-        (can be underneath if another window is raised).
-        """
-        # set always on top flag, makes window disappear
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-        self.show()  # makes window reappear, but it's ALWAYS on top
-
-        # clear always on top flag, makes window disappear
-        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
-        self.show()  # makes window reappear, acts like normal window
+        # threading.Thread(target=self.main_window.start_clients).start()
 
     def start_main_window(self):
         """ Closes this window and start the main one. """
         self.close()
         self.main_window.show()
+        OpeningWindow.bring_win_to_front(self.main_window)
+
+    @staticmethod
+    def bring_win_to_front(window):
+        """
+        Brings a given window to the front and acts like a "normal" window
+        (can be underneath if another window is raised).
+        """
+        # set always on top flag, makes window disappear
+        window.setWindowFlags(window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        window.show()  # makes window reappear, but it's ALWAYS on top
+
+        # clear always on top flag, makes window disappear
+        window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+        window.show()  # makes window reappear, acts like normal window
 
 
 def main():

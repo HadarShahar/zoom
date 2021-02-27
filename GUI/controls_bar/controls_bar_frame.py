@@ -2,7 +2,7 @@
     Hadar Shahar
     The controls bar frame.
 """
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 from GUI.controls_bar.toggle_widget import ToggleWidget
 from GUI.gui_constants import *
 
@@ -11,6 +11,9 @@ class ControlsBarFrame(QtWidgets.QFrame):
     """ Definition of the class ControlsBarFrame. """
 
     HEIGHT = 55
+    LEAVE_BTN_SIZE = (60, 25)  # width, height
+    LAYOUT_MARGINS = (0, 0, 10, 0)  # left, top, right, bottom
+    LAYOUT_SPACING = 0  # no spacing between widgets
 
     def __init__(self, parent: QtWidgets.QWidget,
                  is_audio_on: bool, is_video_on: bool):
@@ -25,15 +28,17 @@ class ControlsBarFrame(QtWidgets.QFrame):
         self.setFixedHeight(ControlsBarFrame.HEIGHT)
 
         self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 10, 0)  # left, top, right, bottom
-        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(*ControlsBarFrame.LAYOUT_MARGINS)
+        self.layout.setSpacing(ControlsBarFrame.LAYOUT_SPACING)
 
         self.create_toggles()
-
-        self.layout.addItem(self.default_hspacer())
+        default_hspacer = QtWidgets.QSpacerItem(
+            *DEFAULT_HSPACER_SIZE, QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum)
+        self.layout.addItem(default_hspacer)
 
         self.leave_button = QtWidgets.QPushButton('Leave', self)
-        self.leave_button.setFixedSize(QtCore.QSize(60, 25))
+        self.leave_button.setFixedSize(*ControlsBarFrame.LEAVE_BTN_SIZE)
         self.leave_button.setObjectName('leave_button')
         self.layout.addWidget(self.leave_button)
 
@@ -67,9 +72,3 @@ class ControlsBarFrame(QtWidgets.QFrame):
                    self.toggle_remote_window_widget)
         for widget in widgets:
             self.layout.addWidget(widget)
-
-    @staticmethod
-    def default_hspacer() -> QtWidgets.QSpacerItem:
-        """ Returns a new horizontal spacer item with the default values. """
-        return QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Minimum)

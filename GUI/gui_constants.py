@@ -5,6 +5,14 @@
 
 STYLE_SHEET_PATH = 'stylesheet.qss'
 PATH_TO_IMAGES = 'images'
+PATH_TO_UI_FILES = 'ui_files'
+
+MAIN_WINDOW_UI_FILE_PATH = f'{PATH_TO_UI_FILES}/ui_main_window.ui'
+OPENING_WINDOW_UI_FILE_PATH = f'{PATH_TO_UI_FILES}/ui_opening_window.ui'
+CHAT_WINDOW_UI_FILEPATH = f'{PATH_TO_UI_FILES}/chat_window.ui'
+
+LOADING_GIF_PATH = f'{PATH_TO_IMAGES}/loading.gif'
+
 TOGGLE_AUDIO_DICT = {
     True: ('Mute', f'{PATH_TO_IMAGES}/open_mic.png'),
     False: ('Unmute', f'{PATH_TO_IMAGES}/closed_mic.png')
@@ -36,3 +44,5 @@ TOGGLE_REMOTE_WINDOW_DICT = {
     False: ('Remote Window', f'{PATH_TO_IMAGES}/windows_icon.png')
 }
 
+# default horizontal spacer's size, doesn't need to be changed
+DEFAULT_HSPACER_SIZE = (40, 20)  # width, height

@@ -56,7 +56,7 @@ class AuthServer(threading.Thread):
                 if access_token:
                     user_info = self.get_user_info(access_token)
                     client_info = {
-                        'id': AuthServer.generate_client_id().hex(),
+                        'id': self.generate_client_id().hex(),
                         'name': user_info['name'],
                         # google returns the img url in the picture attribute
                         'img_url': user_info['picture']
@@ -69,11 +69,15 @@ class AuthServer(threading.Thread):
             return {}
 
     def name_auth(self) -> dict:
+        """
+        Receives the user name and returns it an id
+        (thus authenticates it using its name only).
+        """
         content = request.get_json()
         name = content.get('name')
         if name:
             client_info = {
-                'id': AuthServer.generate_client_id().hex(),
+                'id': self.generate_client_id().hex(),
                 'name': name,
                 'img_url': ''
             }
@@ -81,6 +85,15 @@ class AuthServer(threading.Thread):
         return {}
 
     def get_access_token(self, redirect_uri: str, auth_code: str) -> str:
+        """
+        Receives the user authentication code and exchange it for
+        an access token using google api.
+        :param redirect_uri: the local redirect uri the user
+        used to get the auth code, it must match the uri in future requests
+        to google api.
+        :param auth_code: the code that the user got from google api
+        :returns: the user access token.
+        """
         payload = {
             'code': auth_code,
             'client_id': self.google_client_id,
@@ -93,14 +106,17 @@ class AuthServer(threading.Thread):
 
     @staticmethod
     def generate_client_id() -> bytes:
-        """
-        """
+        """ Generates the client id using random bytes. """
         # AuthServer.next_client_id += 1
         # return str(AuthServer.next_client_id)
         return os.urandom(AuthServer.CLIENT_ID_LEN)
 
     @staticmethod
     def get_user_info(access_token: str) -> dict:
+        """
+        Receives the user access token and
+        returns the its info from google api.
+        """
         url = AuthServer.GOOGLE_USER_INFO_ENDPOINT.format(access_token)
         r = requests.get(url)
         print(url, r.json())

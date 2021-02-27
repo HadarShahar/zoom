@@ -13,6 +13,8 @@ class ToggleWidget(QtWidgets.QFrame):
     HEIGHT = 50
     IMG_WIDTH = IMG_HEIGHT = 35
 
+    LAYOUT_MARGINS = (0, 0, 0, 0)
+    # this signal is emitted when this widget is clicked
     clicked = pyqtSignal()
 
     def __init__(self, parent: QtWidgets.QWidget, toggle_dict: dict,
@@ -24,7 +26,7 @@ class ToggleWidget(QtWidgets.QFrame):
         self.toggle_onclick = toggle_onclick
 
         self.layout = QtWidgets.QGridLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(*ToggleWidget.LAYOUT_MARGINS)
         self.setLayout(self.layout)
         self.setFixedSize(ToggleWidget.WIDTH, ToggleWidget.HEIGHT)
 
@@ -38,7 +40,8 @@ class ToggleWidget(QtWidgets.QFrame):
 
         self.label = QtWidgets.QLabel()
         self.label.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.label, 1, 0)
+        # self.layout.addWidget(self.label, 1, 0)
+        self.layout.addWidget(self.label)
 
         self.update()
 

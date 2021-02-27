@@ -5,7 +5,7 @@
 from typing import Union
 import pickle
 from PyQt5.QtCore import pyqtSignal
-from tcp_network_protocol import send_packet, recv_packet
+from tcp_network_protocol import recv_packet
 from constants import Info
 from client.basic_tcp_client import BasicTcpClient
 from custom_messages.painting import Painting
@@ -26,14 +26,9 @@ class InfoClient(BasicTcpClient):
         # self.client_info = client_info
         super(InfoClient, self).__init__(ip, in_socket_port,
                                          out_socket_port, client_info.id)
+
         # send all the client info to the server
         self.send_info_msg(client_info)
-
-    # def introduce(self):
-    #     """
-    #     This function overrides the ...
-    #     """
-    #     self.send_info_msg(self.client_info)
 
     def send_data_loop(self):
         """
@@ -44,7 +39,7 @@ class InfoClient(BasicTcpClient):
     def receive_data_loop(self):
         """
         Receives messages from the InfoServer
-        and updates the clients_info accordingly.
+        and forwards them to the main window using the new_msg signal.
         """
         while self.running:
             # tuple of the msg name and the msg data
@@ -67,6 +62,4 @@ class InfoClient(BasicTcpClient):
 
     def send_info_msg(self, msg: Union[tuple, ClientInfo]):
         """ Sends a given info message. """
-        send_packet(self.out_socket, pickle.dumps(msg))
-
-
+        self.send_packet(pickle.dumps(msg))

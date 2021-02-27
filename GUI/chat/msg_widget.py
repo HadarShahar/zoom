@@ -4,6 +4,7 @@
 """
 from PyQt5 import QtWidgets
 from custom_messages.chat_msg import ChatMsg
+from GUI.gui_constants import DEFAULT_HSPACER_SIZE
 
 
 class MsgWidget(QtWidgets.QFrame):
@@ -12,14 +13,20 @@ class MsgWidget(QtWidgets.QFrame):
     RECIPIENT_COLOR = 'blue'
     PRIVATELY_COLOR = 'red'
 
+    LAYOUT_MARGINS = (5, 5, 10, 5)  # left, top, right, bottom
+    LAYOUT_SPACING = 0  # no spacing between widgets
+
+    # row, column, row_span, column_span
+    MSG_TEXT_LAYOUT_POSITION = (1, 0, 1, 2)
+
     def __init__(self, parent: QtWidgets.QWidget, msg: ChatMsg,
                  sender_name: str, recipient_name: str):
         """ Constructor. """
         super(MsgWidget, self).__init__(parent)
 
         self.layout = QtWidgets.QGridLayout()
-        self.layout.setContentsMargins(5, 5, 10, 5)  # left, top, right, bottom
-        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(*MsgWidget.LAYOUT_MARGINS)
+        self.layout.setSpacing(MsgWidget.LAYOUT_SPACING)
         self.setLayout(self.layout)
 
         text = f'From {sender_name} to ' \
@@ -33,7 +40,7 @@ class MsgWidget(QtWidgets.QFrame):
         self.layout.addWidget(self.text_label, 0, 0)
 
         self.horizontal_spacer = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding,
+            *DEFAULT_HSPACER_SIZE, QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Minimum)
         self.layout.addItem(self.horizontal_spacer, 0, 1)
 
@@ -42,4 +49,4 @@ class MsgWidget(QtWidgets.QFrame):
 
         self.msg_text = QtWidgets.QLabel(msg.text, self)
         self.layout.addWidget(self.msg_text,
-                              1, 0, 1, 2)  # row, column, row_span, column_span
+                              *MsgWidget.MSG_TEXT_LAYOUT_POSITION)

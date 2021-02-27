@@ -11,16 +11,16 @@ from client.chat_client import ChatClient
 from custom_messages.chat_msg import ChatMsg
 
 from constants import SERVER_IP, CLIENT_IN_CHAT_PORT, CLIENT_OUT_CHAT_PORT
+from GUI.gui_constants import CHAT_WINDOW_UI_FILEPATH
 
 
 class ChatWindow(QtWidgets.QWidget):
     """ Definition of the class ChatWindow. """
 
-    UI_FILEPATH = r'chat\chat_window.ui'
-
     def __init__(self, client_id: bytes, parent: QtWidgets.QWidget):
         """ Constructor. """
         super(ChatWindow, self).__init__(parent)
+        uic.loadUi(CHAT_WINDOW_UI_FILEPATH, self)
         self.client_id = client_id
 
         self.client = ChatClient(SERVER_IP, CLIENT_IN_CHAT_PORT,
@@ -28,7 +28,6 @@ class ChatWindow(QtWidgets.QWidget):
         self.client.new_msg.connect(self.show_chat_msg)
         self.client.start()
 
-        uic.loadUi(ChatWindow.UI_FILEPATH, self)
         self.messages_layout.setAlignment(Qt.AlignTop)
         self.chat_scroll_area.verticalScrollBar().rangeChanged.connect(
             self.scroll_chat_bar)

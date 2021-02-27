@@ -2,7 +2,7 @@
     Hadar Shahar
     The main app code.
 """
-from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from PyQt5.QtCore import pyqtSignal
 import numpy as np
 import sys
@@ -43,14 +43,13 @@ sys.excepthook = except_hook
 
 class MainWindow(QtWidgets.QMainWindow):
     """ Definition of the class MainWindow. """
-    UI_FILEPATH = 'ui_main_window.ui'
 
     finish_loading = pyqtSignal()
 
     def __init__(self):
         """ Initializes the main window. """
         super(MainWindow, self).__init__()
-        uic.loadUi(MainWindow.UI_FILEPATH, self)
+        uic.loadUi(MAIN_WINDOW_UI_FILE_PATH, self)
 
     def setup(self, client_info: ClientInfo):
         """ Sets up the clients and the gui objects. """
@@ -69,13 +68,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the clients' signals to the gui objects
         self.connect_clients()
 
+    # def start_clients(self):
+        for client in self.clients:
+            client.start()
+
         print('finish_loading')
         self.finish_loading.emit()
 
     def init_clients(self):
         """ 
-        Initializes the clients and starts them,
-        each one in a different thread.
+        Initializes the clients.
         """
         # ================================================= info
         self.info_client = InfoClient(
@@ -97,8 +99,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # must be a list because chat client will be added
         self.clients = [self.info_client, self.video_client,
                         self.share_screen_client, self.audio_client]
-        for client in self.clients:
-            client.start()
 
     def connect_clients(self):
         """ Connects the clients' signals to the corresponding functions. """
@@ -153,10 +153,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controls_bar = ControlsBarFrame(
             self.main_frame, self.client_info.is_audio_on,
             self.client_info.is_video_on)
-        self.main_grid_layout.addWidget(self.controls_bar,
-                                        # row, column, row_span, column_span
-                                        # 3, 0, 1, 3)
-                                        1, 0)
+        self.main_grid_layout.addWidget(self.controls_bar)
+        # self.main_grid_layout.addWidget(self.controls_bar, 1, 0) #row, column
         self.controls_bar.leave_button.clicked.connect(self.exit)
         self.connect_toggles()
 
@@ -207,6 +205,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.video_grid_container_layout.addWidget(
             self.video_grid, 1, 1)  # 1, 1 because of the spacers
+        # TODO constant
 
     def create_chat_window(self):
         """ Creates the chat window. """
@@ -299,7 +298,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.info_client.send_info_msg((stop_msg, self.client_info.id))
                 ui_widget.hide()
             else:
-                self.info_client.send_info_msg((start_msg, self.client_info.id))
+                self.info_client.send_info_msg(
+                    (start_msg, self.client_info.id))
                 ui_widget.show()
             toggle_widget.toggle()
             return True
@@ -344,6 +344,7 @@ def main():
     # create the main window
     win = MainWindow()
     win.setup(ClientInfo(b'100', 'TestUser'))
+    # win.setup(ClientInfo(b'102', 'TestUser2'))
     win.show()
 
     # start the event loop

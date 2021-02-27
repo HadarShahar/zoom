@@ -7,7 +7,7 @@ import sys
 from abc import ABC
 from client.basic_client import BasicClient
 from constants import EXIT_SIGN
-from tcp_network_protocol import send_packet
+from tcp_network_protocol import create_packet
 
 
 class BasicTcpClient(BasicClient, ABC):
@@ -24,15 +24,19 @@ class BasicTcpClient(BasicClient, ABC):
             self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.out_socket.connect((ip, out_socket_port))
 
-            self.introduce()
+            # send the client id to the server
+            self.send_packet(self.id)
 
         except socket.error as msg:  # TODO nice exit
             print('Connection failure: %s\n terminating program' % msg)
             sys.exit(1)
 
-    def introduce(self):
-        """ Introduces this client to the server by sending its id. """
-        send_packet(self.out_socket, self.id)
+    def send_packet(self, data: bytes):
+        """ Creates a packet of data and sends it.  """
+        self.out_socket.send(create_packet(data))
+        # TODO: maybe use sendall
+        # if len(data) != sent:
+        #     print(len(data), sent)
 
     def close(self):
         """
@@ -43,6 +47,6 @@ class BasicTcpClient(BasicClient, ABC):
         # if self.out_socket.fileno() != -1:
         # fileno() will return -1 for closed sockets.
         if not self.out_socket._closed:
-            send_packet(self.out_socket, EXIT_SIGN)
+            self.send_packet(EXIT_SIGN)
         self.in_socket.close()
         self.out_socket.close()

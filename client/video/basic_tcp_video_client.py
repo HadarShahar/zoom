@@ -7,7 +7,7 @@ import cv2
 from PyQt5.QtCore import pyqtSignal
 from abc import abstractmethod
 from constants import CHUNK_SIZE, EOF, JPEG_QUALITY
-from tcp_network_protocol import send_packet, recv_packet
+from tcp_network_protocol import recv_packet
 from client.basic_tcp_client import BasicTcpClient
 
 
@@ -55,8 +55,8 @@ class BasicTcpVideoClient(BasicTcpClient):
             # send the data in chunks to the server
             for i in range(0, len(data), CHUNK_SIZE):
                 chunk = data[i: i + CHUNK_SIZE]
-                send_packet(self.out_socket, chunk)
-            send_packet(self.out_socket, EOF)
+                self.send_packet(chunk)
+            self.send_packet(EOF)
 
     def receive_data_loop(self):
         """

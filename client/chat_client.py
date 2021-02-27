@@ -3,7 +3,7 @@
     The chat client code.
 """
 from PyQt5.QtCore import pyqtSignal
-from tcp_network_protocol import send_packet, recv_packet
+from tcp_network_protocol import recv_packet
 from custom_messages.chat_msg import ChatMsg
 from client.basic_tcp_client import BasicTcpClient
 import pickle
@@ -40,4 +40,4 @@ class ChatClient(BasicTcpClient):
         Receives a message, converts it to bytes
         and sends it to the server.
         """
-        send_packet(self.out_socket, pickle.dumps(msg))
+        self.send_packet(pickle.dumps(msg))

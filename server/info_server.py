@@ -43,6 +43,7 @@ class InfoServer(BroadcastTcpServer):
         # send the other clients info to the new client
         msg = (Info.CLIENTS_INFO,
                [p.client_info for p in self.participants.values()])
+
         # send the last messages (related to sharing) to the new client
         for m in [msg] + self.last_status_msgs:
             send_packet(new_par.in_socket, pickle.dumps(m))

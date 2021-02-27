@@ -15,6 +15,16 @@ from custom_messages.painting import Painting
 class SmartBoard(QtWidgets.QFrame):
     """ Definition of the class SmartBoard. """
 
+    # the minimum line length
+    MIN_LINE_LEN = 20
+
+    # the maximum distance between each point and the line
+    DISTANCE_THRESHOLD = 10
+
+    # used for rounding the slope - if the absolute value of the slope
+    # is less than this threshold, convert it to 0
+    SLOPE_0_THRESHOLD = 0.05
+
     # this signal is emitted when a new painting is created
     new_painting = pyqtSignal(Painting)
 
@@ -22,7 +32,7 @@ class SmartBoard(QtWidgets.QFrame):
         """ Initializes the different widgets of the smart board. """
         super(SmartBoard, self).__init__(parent)
 
-        self.bg_color = '#FFFFFF'  # white
+        self.bg_color = SmartBoardToolbar.WHITE_COLOR_HEX
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
@@ -30,7 +40,7 @@ class SmartBoard(QtWidgets.QFrame):
         self.label = QtWidgets.QLabel(self)
         self.label.setMinimumSize(BasicVideoWidget.MIN_WIDTH,
                                   BasicVideoWidget.MIN_HEIGHT)
-        # self.label.setGeometry(0, 0, self.width(), self.height())
+
         pixmap = QtGui.QPixmap(self.label.width(), self.label.height())
         pixmap.fill(QColor(self.bg_color))
         self.label.setPixmap(pixmap)
@@ -39,29 +49,11 @@ class SmartBoard(QtWidgets.QFrame):
         self.toolbar = SmartBoardToolbar(self)
         self.layout.addWidget(self.toolbar)
 
-        # self.pen = QtGui.QPen()
-        # self.pen.setWidth(self.toolbar.pen_width)
-        # self.pen.setColor(QColor(self.toolbar.pen_color))
-        # self.toolbar.new_color.connect(lambda c:
-        #                                self.pen.setColor(QColor(c)))
-        # self.toolbar.pen_width_slider.value_changed.connect(self.pen.setWidth)
         self.toolbar.clear_button.clicked \
             .connect(lambda: self.draw_and_send(Painting(Painting.CLEAR_ALL)))
 
         self.last_xs = []
         self.last_ys = []
-
-        # TODO make sliders that control these thresholds
-        # the minimum line length
-        self.min_line_len = 20
-        # the maximum distance between each point and the line
-        self.distance_threshold = 10
-        # if the absolute value of the slope is less than this threshold,
-        # convert it to 0
-        self.slope_0_threshold = 0.05
-        # if the absolute value of the difference between 2 given slopes
-        # is less than this threshold, they are considered parallel
-        self.parallel_slopes_threshold = 0.1
 
     def clear(self):
         """ Clears the board. """
@@ -104,15 +96,14 @@ class SmartBoard(QtWidgets.QFrame):
     def mouseReleaseEvent(self, e: QMouseEvent):
         """
         This function is called when the mouse is released.
-        It checks if the last points represent a shape.
+        It checks if the last points represent a line or a rectangle.
         """
         # if it's an empty list, there are no shapes
         if not self.last_xs:
             return
 
         if self.check_for_line() or \
-                self.check_for_rect() or \
-                self.check_for_circle():
+                self.check_for_rect():
             pass
 
         self.last_xs = []
@@ -176,19 +167,12 @@ class SmartBoard(QtWidgets.QFrame):
         xs = self.last_xs
         ys = self.last_ys
 
-        # import matplotlib.pyplot as plt
-        # try:
-        #     plt.plot(xs, ys)
-        #     plt.show()
-        # except Exception as e:
-        #     print(e)
-
         if self.is_slope_undefined(xs):
             # the coordinates of the new line
             start_point = (xs[0], ys[0])
             end_point = (xs[-1], ys[-1])
         else:
-            f = self.get_line_function(xs, ys)
+            f = self.get_line_equation(xs, ys)
             if not f:
                 return False
             # the coordinates of the new line
@@ -207,6 +191,10 @@ class SmartBoard(QtWidgets.QFrame):
 
     def check_for_rect(self) -> bool:
         """
+        Checks if the previous collected point represent a rectangle.
+        If they do - it clears them, draws the rectangle, sends it
+        and returns True.
+        Otherwise, returns False.
         """
         xs = self.last_xs
         ys = self.last_ys
@@ -221,12 +209,10 @@ class SmartBoard(QtWidgets.QFrame):
         # calculate the slopes of each side
         top_slope = self.round_slope(self.slope(top_left, top_right))
         bottom_slope = self.round_slope(self.slope(bottom_left, bottom_right))
-        # left_slope = self.round_slope(self.slope(top_left, bottom_left))
-        # right_slope = self.round_slope(self.slope(top_right, bottom_right))
 
         is_rect = top_slope == bottom_slope == 0 and \
-                  self.is_slope_undefined([top_left[0], bottom_left[0]]) and \
-                  self.is_slope_undefined([top_right[0], bottom_right[0]])
+            self.is_slope_undefined([top_left[0], bottom_left[0]]) and \
+            self.is_slope_undefined([top_right[0], bottom_right[0]])
 
         if not is_rect:
             return False
@@ -243,18 +229,6 @@ class SmartBoard(QtWidgets.QFrame):
         self.draw_and_send(painting)
         return True
 
-    def check_for_circle(self) -> bool:
-        """
-        """
-        xs = self.last_xs
-        ys = self.last_ys
-        center = (self.avg(xs), self.avg(ys))
-        distances = [self.distance(center, p) for p in zip(xs, ys)]
-        a, b = center
-        # self.draw_painting(Painting(Painting.LINE, (a-1, b, a+1, b)))
-        # print(min(distances), max(distances))
-        return False
-
     def resizeEvent(self, e: QtGui.QResizeEvent):
         """
         This function is called when the smart board is resized.
@@ -264,20 +238,20 @@ class SmartBoard(QtWidgets.QFrame):
                                             self.label.height())
         self.label.setPixmap(pixmap)
 
-    def get_line_function(self, xs: list, ys: list):
+    def get_line_equation(self, xs: list, ys: list):
         """
-        Returns the line function if it's a straight line,
+        Returns the line equation if it's a straight line,
         None otherwise.
         """
         # if the line length is less than the minimum length
         if SmartBoard.distance((xs[0], ys[0]),
-                               (xs[-1], ys[-1])) < self.min_line_len:
+                               (xs[-1], ys[-1])) < SmartBoard.MIN_LINE_LEN:
             return None
 
         m, b = list(np.polyfit(xs, ys, 1))
         for p in zip(xs, ys):
             dist = SmartBoard.distance_point_line(p, m, b)
-            if dist > self.distance_threshold:
+            if dist > SmartBoard.DISTANCE_THRESHOLD:
                 return None
 
         m = self.round_slope(m)
@@ -285,14 +259,14 @@ class SmartBoard(QtWidgets.QFrame):
             return None
 
         f = lambda x: m * x + b
-        print(f'y = {m}x + {b}')
+        # print(f'y = {m}x + {b}')
         return f
 
     def round_slope(self, slope: float):
         """ Rounds a given slope. """
         if slope is None:
             return None
-        if abs(slope) < self.slope_0_threshold:
+        if abs(slope) < self.SLOPE_0_THRESHOLD:
             return 0
         return slope
 
@@ -304,24 +278,7 @@ class SmartBoard(QtWidgets.QFrame):
         """
         avg_x = SmartBoard.avg(xs)
         max_dist_from_avg = max([abs(x1 - avg_x) for x1 in xs])
-        return max_dist_from_avg < self.distance_threshold
-
-    def are_lines_parallel(self, slope1: float, slope2: float) -> bool:
-        """ Returns True if 2 lines are parallel, False otherwise. """
-        if slope1 is None:
-            return slope2 is None
-        if slope2 is None:
-            return slope1 is None
-        return abs(slope1 - slope2) < self.parallel_slopes_threshold
-
-    # def are_lines_vertical(self, slope1: float, slope2: float) -> bool:
-    #     """ Returns True if 2 lines are vertical, False otherwise. """
-    #     if slope1 is None:
-    #         return slope2 == 0
-    #     if slope1 == 0:
-    #         return slope2 is None
-    #     print(abs(slope1*slope2))
-    #     return False
+        return max_dist_from_avg < self.DISTANCE_THRESHOLD
 
     @staticmethod
     def distance(p1: tuple, p2: tuple) -> float:
@@ -347,14 +304,6 @@ class SmartBoard(QtWidgets.QFrame):
                            for p in points}
         min_dist = min(points_distance.keys())
         return points_distance[min_dist]
-        # closest_point = points[0]
-        # min_dist = SmartBoard.distance(closest_point, target_point)
-        # for p in points:
-        #     d = SmartBoard.distance(p, target_point)
-        #     if d < min_dist:
-        #         closest_point = p
-        #         min_dist = d
-        # return closest_point
 
     @staticmethod
     def slope(point1: tuple, point2: tuple):
@@ -372,6 +321,37 @@ class SmartBoard(QtWidgets.QFrame):
         """ Given a list of numbers, returns the average number. """
         return sum(nums) / len(nums)
 
+    # def are_lines_parallel(self, slope1: float, slope2: float) -> bool:
+    #     """ Returns True if 2 lines are parallel, False otherwise. """
+    #     # if the absolute value of the difference between 2 given slopes
+    #     # is less than this threshold, they are considered parallel
+    #     self.parallel_slopes_threshold = 0.1
+    #     if slope1 is None:
+    #         return slope2 is None
+    #     if slope2 is None:
+    #         return slope1 is None
+    #     return abs(slope1 - slope2) < self.parallel_slopes_threshold
+
+    # def are_lines_vertical(self, slope1: float, slope2: float) -> bool:
+    #     """ Returns True if 2 lines are vertical, False otherwise. """
+    #     if slope1 is None:
+    #         return slope2 == 0
+    #     if slope1 == 0:
+    #         return slope2 is None
+    #     print(abs(slope1*slope2))
+    #     return False
+
+    # def check_for_circle(self) -> bool:
+    #     """
+    #     """
+    #     xs = self.last_xs
+    #     ys = self.last_ys
+    #     center = (self.avg(xs), self.avg(ys))
+    #     distances = [self.distance(center, p) for p in zip(xs, ys)]
+    #     a, b = center
+    #     # self.draw_painting(Painting(Painting.LINE, (a-1, b, a+1, b)))
+    #     # print(min(distances), max(distances))
+    #     return False
 
 if __name__ == '__main__':
     # We don't need to create a QMainWindow since

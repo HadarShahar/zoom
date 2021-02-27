@@ -56,18 +56,18 @@ class UdpPacketsHandler:
 
         :return:
         """
-        num_packets = len(self.packets_data)
-        received = num_packets - self.packets_data.count(b'')
-        received_percent = received / num_packets
-        print_percent = f'{received}/{num_packets} ({received_percent:.2f})'
-
-        if received_percent > self.RECEIVED_PACKETS_THRESHOLD:
-            self.fill_missing_packets()
-            print(f'Received {print_percent} packets, filling the rest.')
-            return b''.join(self.packets_data)
-
-        print(f'A more recent packet received, dropping '
-              f'{print_percent} packets.')
+        # num_packets = len(self.packets_data)
+        # received = num_packets - self.packets_data.count(b'')
+        # received_percent = received / num_packets
+        # print_percent = f'{received}/{num_packets} ({received_percent:.2f})'
+        #
+        # if received_percent > self.RECEIVED_PACKETS_THRESHOLD:
+        #     self.fill_missing_packets()
+        #     print(f'Received {print_percent} packets, filling the rest.')
+        #     return b''.join(self.packets_data)
+        #
+        # print(f'A more recent packet received, dropping '
+        #       f'{print_percent} packets.')
         return b''
 
     def fill_missing_packets(self):
