@@ -4,7 +4,7 @@
     All the constants that will be written in the registry.
 """
 
-SERVER_IP = '127.0.0.1'        # the server ip
+SERVER_IP = '172.29.229.95'        # the server ip
 
 AUTH_SERVER_PORT = 7231
 

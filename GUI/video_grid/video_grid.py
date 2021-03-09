@@ -6,10 +6,10 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import numpy as np
-from constants import DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT
+from client.video.video_camera import VideoCamera
 from client.video.basic_udp_video_client import BasicUdpVideoClient
 from GUI.video_grid.client_video_widget import ClientVideoWidget
-from custom_messages.client_info import ClientInfo
+from network.custom_messages.client_info import ClientInfo
 
 
 class VideoGrid(QtWidgets.QFrame):
@@ -94,7 +94,8 @@ class VideoGrid(QtWidgets.QFrame):
 
         # calc the maximum size with the original aspect ratio
         # using an empty pixmap
-        empty_pixmap = QPixmap(DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT)
+        empty_pixmap = QPixmap(VideoCamera.DEFAULT_VIDEO_WIDTH,
+                               VideoCamera.DEFAULT_VIDEO_HEIGHT)
         empty_pixmap = empty_pixmap.scaled(maxw, maxh, Qt.KeepAspectRatio)
 
         for w in widgets:

@@ -26,8 +26,9 @@ def get_saved_values(names: list) -> list:
     the path HKEY_LOCAL_MACHINE\\{REG_PATH} (where they were saved).
     """
     try:
-        registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                      REG_PATH, 0, winreg.KEY_READ)
+        registry_key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, REG_PATH, 0,
+            winreg.KEY_READ | winreg.KEY_WOW64_64KEY)  # access the 64-bit registry view from 32-bit python
         values = []
         for name in names:
             value, regtype = winreg.QueryValueEx(registry_key, name)
@@ -84,7 +85,7 @@ def set_reg_values():
         set_reg(name, value)
 
 
-def generate_reg_values_file(output_file='reg_values.reg'):
+def generate_reg_file(output_file='registry\\reg_constants.reg'):
     """
     Generates a .reg file ready to be double clicked
     to save all the values in the registry at HKEY_LOCAL_MACHINE\\{REG_PATH}.
@@ -117,4 +118,4 @@ def generate_reg_values_file(output_file='reg_values.reg'):
 
 if __name__ == '__main__':
     # set_reg_values()
-    generate_reg_values_file()
+    generate_reg_file()

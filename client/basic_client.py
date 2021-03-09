@@ -2,9 +2,10 @@
     Hadar Shahar
     The basic client code.
 """
+import socket
 import threading
 from abc import ABCMeta, abstractmethod
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
 class QABCMeta(ABCMeta, type(QThread)):
@@ -35,6 +36,8 @@ class BasicClient(QThread, metaclass=QABCMeta):
     because it contains abstract methods.
     """
 
+    network_error = pyqtSignal(str)  # details
+
     def __init__(self, client_id: bytes, is_sharing=True):
         """ Constructor. """
         super(BasicClient, self).__init__()
@@ -60,9 +63,6 @@ class BasicClient(QThread, metaclass=QABCMeta):
         # TODO check loading issue
         threading.Thread(target=self.catch_exception,
                          args=(self.send_data_loop,)).start()
-        # t = QThread()
-        # t.run = self.start_send_data_loop
-        # t.start()
         self.catch_exception(self.receive_data_loop)
 
     def catch_exception(self, func):
@@ -72,12 +72,18 @@ class BasicClient(QThread, metaclass=QABCMeta):
         """
         try:
             func()
+        # except socket.error as e:
+        #     self.network_error.emit(str(e))
         except Exception as e:
-            # print the exception only if it occurred
+            # handle the exception only if it occurred
             # while running and not while exiting
             if self.running:
                 # __qualname__ = the path to the function: ClassName.FuncName..
                 print(f'{func.__qualname__}: {e}')
+
+                if isinstance(e, socket.error):
+                    self.network_error.emit(str(e))
+
                 self.close()
 
     @abstractmethod
@@ -98,5 +104,5 @@ class BasicClient(QThread, metaclass=QABCMeta):
 
     def close(self):
         """ Stops running. """
-        print('closing')
+        print('closing', type(self))
         self.running = False

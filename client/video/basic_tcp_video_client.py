@@ -6,9 +6,10 @@ import numpy as np
 import cv2
 from PyQt5.QtCore import pyqtSignal
 from abc import abstractmethod
-from constants import CHUNK_SIZE, EOF, JPEG_QUALITY
-from tcp_network_protocol import recv_packet
+from network.constants import CHUNK_SIZE, EOF
+from network.tcp_network_utils import recv_packet
 from client.basic_tcp_client import BasicTcpClient
+from client.video.video_camera import VideoCamera
 
 
 class BasicTcpVideoClient(BasicTcpClient):
@@ -95,7 +96,8 @@ class BasicTcpVideoClient(BasicTcpClient):
         and converts it to bytes.
         """
         # change the quality of the image
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),
+                        VideoCamera.JPEG_QUALITY]
         flag, encoded_image = cv2.imencode('.jpg', frame, encode_param)
         data = encoded_image.tobytes()
         return data

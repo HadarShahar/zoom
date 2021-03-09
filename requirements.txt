@@ -2,7 +2,9 @@ PyQt5
 numpy
 opencv-python
 pillow
-pyaudio
 uiautomation
+requests
 Flask
 python-dotenv
+pywin32
+pyaudio

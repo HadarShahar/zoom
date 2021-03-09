@@ -2,20 +2,20 @@
     Hadar Shahar
     The basic video widget code.
 """
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
 import numpy as np
 import cv2
-from constants import DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT
+from client.video.video_camera import VideoCamera
 
 
 class BasicVideoWidget(QtWidgets.QLabel):
     """ Definition of the class BasicVideoWidget. """
 
     SIZE_DIVIDER = 4
-    MIN_WIDTH = DEFAULT_VIDEO_WIDTH // SIZE_DIVIDER
-    MIN_HEIGHT = DEFAULT_VIDEO_HEIGHT // SIZE_DIVIDER
+    MIN_WIDTH = VideoCamera.DEFAULT_VIDEO_WIDTH // SIZE_DIVIDER
+    MIN_HEIGHT = VideoCamera.DEFAULT_VIDEO_HEIGHT // SIZE_DIVIDER
 
     def __init__(self, parent: QtWidgets.QWidget):
         """ Constructor. """

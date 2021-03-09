@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QMouseEvent, QKeyEvent, QColor
 from GUI.smart_board.smart_board_toolbar import SmartBoardToolbar
 from GUI.widgets.basic_video_widget import BasicVideoWidget
-from custom_messages.painting import Painting
+from network.custom_messages.painting import Painting
 
 
 class SmartBoard(QtWidgets.QFrame):
@@ -352,6 +352,7 @@ class SmartBoard(QtWidgets.QFrame):
     #     # self.draw_painting(Painting(Painting.LINE, (a-1, b, a+1, b)))
     #     # print(min(distances), max(distances))
     #     return False
+
 
 if __name__ == '__main__':
     # We don't need to create a QMainWindow since

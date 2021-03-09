@@ -3,7 +3,7 @@
     UdpPacket.
 """
 import struct
-from constants import NETWORK_BYTES_PER_NUM
+from network.constants import NETWORK_BYTES_PER_NUM
 
 
 class UdpPacket:

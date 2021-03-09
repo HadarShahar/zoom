@@ -3,7 +3,7 @@
     The chat recipients code.
 """
 from PyQt5 import QtGui
-from custom_messages.chat_msg import ChatMsg
+from network.custom_messages.chat_msg import ChatMsg
 
 
 class ChatRecipients(QtGui.QStandardItemModel):

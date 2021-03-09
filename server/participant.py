@@ -41,4 +41,5 @@ class Participant(object):
 
     def __repr__(self) -> str:
         """ Returns the participant representation. """
-        return f'Par(id={self.id})'
+        # return f'Par(id={self.id})'
+        return f'Par({self.address})'

@@ -8,35 +8,34 @@ OpeningWindow QLabel {
 }
 
 QPushButton#google_sign_in_button {
-    background-image: url(images/google_signin/btn_google_signin_light_normal_web.png);
+    background-image: url(GUI/images/google_signin/1x/btn_normal.png);
     width: 191px;
     height: 46px;
     border-radius: 5px;
 }
 QPushButton#google_sign_in_button:hover {
-    background-image: url(images/google_signin/btn_google_signin_light_focus_web.png);
+    background-image: url(GUI/images/google_signin/1x/btn_focus.png);
 }
 QPushButton#google_sign_in_button:pressed {
-    background-image: url(images/google_signin/btn_google_signin_light_pressed_web.png);
+    background-image: url(GUI/images/google_signin/1x/btn_pressed.png);
 }
 
 QLineEdit#name_input {
     height: 30px;
-    border: 1px solid black;
+    /* border: 1px solid black; */
     border-radius: 5px;
 }
 QPushButton#name_sign_in_button {
     height: 30px;
-    border: 1px solid black;
     border-radius: 5px;
+    border: 1px solid white;
 
-    background-color: white;
+    background-color: #0e72ed;
+    color: white;
     width: 70px;
 }
 QPushButton#name_sign_in_button:hover {
-    border: 1px solid white;
     background-color: #304d9e;
-    color: white;
 }
 QLabel#no_name_error_label {
     color: red;

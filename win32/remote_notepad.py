@@ -13,7 +13,7 @@ from PyQt5.QtCore import pyqtSignal, QMutex
 
 from win32.remote_window import RemoteWindow
 from win32.notepad_state import NotepadState
-from custom_messages.remote_window_msg import RemoteWindowMsg
+from network.custom_messages.remote_window_msg import RemoteWindowMsg
 
 user32 = ctypes.WinDLL('User32.dll')
 # user32 = ctypes.windll.user32

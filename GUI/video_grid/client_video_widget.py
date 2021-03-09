@@ -3,14 +3,15 @@
     ClientVideoWidget.
 """
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import pyqtSignal
 import requests
 import threading
 import numpy as np
 import cv2
+from GUI.gui_constants import PATH_TO_IMAGES
 from GUI.widgets.basic_video_widget import BasicVideoWidget
-from custom_messages.client_info import ClientInfo
+from network.custom_messages.client_info import ClientInfo
 
 
 class ClientVideoWidget(BasicVideoWidget):
@@ -22,7 +23,7 @@ class ClientVideoWidget(BasicVideoWidget):
     SPEAKER_BORDER_STYLE = f'border: {BORDER_SIZE}px solid yellow;'
 
     IMG_WIDTH = IMG_HEIGHT = 20
-    RED_MIC_PATH = 'images/red_mic.png'  # TODO path to images
+    RED_MIC_PATH = f'{PATH_TO_IMAGES}\\red_mic.png'
 
     # this signal is emitted after the default image has been downlaoded
     default_img_downloaded = pyqtSignal()

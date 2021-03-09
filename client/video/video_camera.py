@@ -4,11 +4,20 @@
 """
 import cv2
 import threading
-from constants import VIDEO_WIDTH, VIDEO_HEIGHT
 
 
 class VideoCamera(object):
     """ Definition of the class VideoCamera. """
+
+    # the VideoCapture image size
+    DEFAULT_VIDEO_WIDTH = 640
+    DEFAULT_VIDEO_HEIGHT = 480
+    DIVIDER = 1
+    VIDEO_WIDTH = DEFAULT_VIDEO_WIDTH / DIVIDER
+    VIDEO_HEIGHT = DEFAULT_VIDEO_HEIGHT / DIVIDER
+
+    # the quality of the image from 0 to 100 (the higher is the better)
+    JPEG_QUALITY = 80  # default is 95
 
     # 1 to flip the image around the y-axis (0 to flip around the x-axis)
     FLIP_AXIS = 1
@@ -40,8 +49,8 @@ class VideoCamera(object):
             print('Connected to camera')
 
             # change the VideoCapture frame size
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, VideoCamera.VIDEO_WIDTH)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VideoCamera.VIDEO_HEIGHT)
 
     def get_frame(self, show=False):
         """

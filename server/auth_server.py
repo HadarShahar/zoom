@@ -37,7 +37,8 @@ class AuthServer(threading.Thread):
         """ Runs the server. """
         # flask reloader expects to run in the main thread,
         # and it's not the main thread, thus I must disable it.
-        self.app.run(debug=True, use_reloader=False, port=self.port)
+        self.app.run(debug=True, use_reloader=False,
+                     host='0.0.0.0', port=self.port)
 
     def google_auth(self) -> dict:
         """

@@ -3,7 +3,7 @@
     MsgWidget.
 """
 from PyQt5 import QtWidgets
-from custom_messages.chat_msg import ChatMsg
+from network.custom_messages.chat_msg import ChatMsg
 from GUI.gui_constants import DEFAULT_HSPACER_SIZE
 
 

@@ -8,7 +8,7 @@ import os
 import hashlib
 import webbrowser
 from PyQt5.QtCore import QThread, pyqtSignal
-from custom_messages.client_info import ClientInfo
+from network.custom_messages.client_info import ClientInfo
 from client.network_constants import Constants
 from client.auth.local_web_server import LocalWebServer
 
@@ -31,7 +31,7 @@ class AuthClient(QThread):
     # from the server (after the client signs in with google)
     recv_client_info_signal = pyqtSignal(ClientInfo)
 
-    error_signal = pyqtSignal(str, str)  # text, info_text
+    network_error = pyqtSignal(str)  # details
 
     def __init__(self):
         """ Constructor. """
@@ -43,6 +43,10 @@ class AuthClient(QThread):
         self.state_token = b''
 
     def run(self):
+        """
+        Starts the local web server that receives
+        the client's auth code from google.
+        """
         self.local_web_server.run()
 
     def handle_auth_code(self, auth_code: str, state_token: str) -> \
@@ -87,7 +91,7 @@ class AuthClient(QThread):
                 self.recv_client_info_signal.emit(client_info)
                 return client_info
         except requests.exceptions.ConnectionError as e:
-            self.error_signal.emit('Server is down.', '')
+            self.network_error.emit('The server is down, please try again later.')
 
     def generate_state_token(self):
         """

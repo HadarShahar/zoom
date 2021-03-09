@@ -5,18 +5,19 @@
 from typing import Union
 import pickle
 from PyQt5.QtCore import pyqtSignal
-from tcp_network_protocol import recv_packet
-from constants import Info
+from network.tcp_network_utils import recv_packet
 from client.network_constants import Constants
 from client.basic_tcp_client import BasicTcpClient
-from custom_messages.painting import Painting
-from custom_messages.client_info import ClientInfo
-from custom_messages.remote_window_msg import RemoteWindowMsg
+from network.custom_messages.general_info import Info
+from network.custom_messages.painting import Painting
+from network.custom_messages.client_info import ClientInfo
+from network.custom_messages.remote_window_msg import RemoteWindowMsg
 
 
 class InfoClient(BasicTcpClient):
     """ Definition of the class InfoClient. """
 
+    # this signal is emitted when new info is received from the server
     new_info = pyqtSignal(tuple)
 
     def __init__(self, client_info: ClientInfo):

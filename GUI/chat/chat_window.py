@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from GUI.chat.msg_widget import MsgWidget
 from GUI.chat.chat_recipients import ChatRecipients
 from client.chat_client import ChatClient
-from custom_messages.chat_msg import ChatMsg
+from network.custom_messages.chat_msg import ChatMsg
 from GUI.gui_constants import CHAT_WINDOW_UI_FILEPATH
 
 

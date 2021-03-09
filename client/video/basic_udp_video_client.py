@@ -6,10 +6,10 @@ import numpy as np
 import cv2
 from PyQt5.QtCore import pyqtSignal
 from abc import abstractmethod
-from constants import JPEG_QUALITY
 from client.basic_udp_client import BasicUdpClient
 from client.video.udp_packet import UdpPacket
 from client.video.udp_packets_handler import UdpPacketsHandler
+from client.video.video_camera import VideoCamera
 
 
 class BasicUdpVideoClient(BasicUdpClient):
@@ -89,7 +89,8 @@ class BasicUdpVideoClient(BasicUdpClient):
         and converts it to bytes.
         """
         # change the quality of the image
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),
+                        VideoCamera.JPEG_QUALITY]
         flag, encoded_image = cv2.imencode('.jpg', frame, encode_param)
         data = encoded_image.tobytes()
         return data

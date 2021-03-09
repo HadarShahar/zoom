@@ -6,7 +6,7 @@ import socket
 import sys
 import threading
 import struct
-from constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
+from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
     UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG
 
 
@@ -30,6 +30,7 @@ class BroadcastUdpServer(threading.Thread):
 
             # {client_id: client_in_address}
             self.clients_addresses: [bytes, (str, int)] = {}
+            self.clients_addresses_lock = threading.Lock()
 
         except socket.error as msg:
             print(f'{self.server_name} connection failure: {msg}')
@@ -57,18 +58,17 @@ class BroadcastUdpServer(threading.Thread):
                 client_id = data[n: n + id_len]
                 content = data[n + id_len:]
 
-                # if it's a known client
-                if client_id in self.clients_addresses:
-                    self.broadcast(client_id, data)
-                    continue
-
-                # if it's a new client (or a malformed packet)
-                if content.startswith(UDP_NEW_CLIENT_MSG):
-                    self.clients_addresses[client_id] = client_address
-                    print(f'{self.server_name} participants: '
-                          f'{self.clients_addresses.keys()}')
-                else:
-                    print('malformed packet.')
+                with self.clients_addresses_lock:
+                    if client_id in self.clients_addresses:
+                        # if it's a known client
+                        self.broadcast(client_id, data)
+                    elif content.startswith(UDP_NEW_CLIENT_MSG):
+                        # if it's a new client
+                        self.clients_addresses[client_id] = client_address
+                        print(f'{self.server_name} participants: '
+                              f'{self.clients_addresses.keys()}')
+                    else:
+                        print('malformed packet.')
 
         except socket.error as e:
             print(f'{self.server_name} receive_and_broadcast: {e}')
@@ -87,7 +87,8 @@ class BroadcastUdpServer(threading.Thread):
         The main server calls this function when a client disconnects.
         It removes it from clients_addresses.
         """
-        if client_id in self.clients_addresses:
-            del self.clients_addresses[client_id]
-        print(f'{self.server_name} participants: '
-              f'{self.clients_addresses.keys()}')
+        with self.clients_addresses_lock:
+            if client_id in self.clients_addresses:
+                del self.clients_addresses[client_id]
+            print(f'{self.server_name} participants: '
+                  f'{self.clients_addresses.keys()}')

@@ -2,16 +2,13 @@
     Hadar Shahar
     The main app code.
 """
-from PyQt5 import QtWidgets, QtGui, QtCore, uic
+from PyQt5 import QtWidgets, QtGui, uic
 from PyQt5.QtCore import pyqtSignal
-import numpy as np
+import socket
 import sys
 
-# add the parent directory to the "module search path"
-# in order to import files from other folders
-sys.path.insert(0, '..')
-
-from constants import Info
+from network.custom_messages.client_info import ClientInfo
+from network.custom_messages.general_info import Info
 from GUI.gui_constants import *
 
 from GUI.controls_bar.controls_bar_frame import ControlsBarFrame
@@ -27,19 +24,6 @@ from client.video.camera_client import CameraClient
 from client.video.share_screen_client import ShareScreenClient
 from client.audio.audio_client import AudioClient
 
-from custom_messages.client_info import ClientInfo
-
-
-# ========================================================== important!!!
-# without it, PyQt5 immediately aborts when encountering
-# an unhandled exception, without traceback
-def except_hook(cls, exception, traceback):
-    sys.__excepthook__(cls, exception, traceback)
-
-
-# When an exception is raised and uncaught,the interpreter calls sys.excepthook
-sys.excepthook = except_hook
-
 
 class MainWindow(QtWidgets.QMainWindow):
     """ Definition of the class MainWindow. """
@@ -50,12 +34,17 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Initializes the main window. """
         super(MainWindow, self).__init__()
         uic.loadUi(MAIN_WINDOW_UI_FILE_PATH, self)
-
-    def setup(self, client_info: ClientInfo):
-        """ Sets up the clients and the gui objects. """
-        self.client_info = client_info
         self.clients = []
-        self.init_clients()
+        self.running = True
+
+    def setup(self, client_info: ClientInfo) -> bool:
+        """
+         Sets up the clients and the gui objects.
+         :returns: True if the set up was successful, False otherwise.
+         """
+        self.client_info = client_info
+        if not self.init_clients():
+            return False
 
         self.create_controls_bar()
         self.create_video_grid()
@@ -68,25 +57,32 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the clients' signals to the gui objects
         self.connect_clients()
 
-    # def start_clients(self):
+        # def start_clients(self):
         for client in self.clients:
             client.start()
 
         print('finish_loading')
         self.finish_loading.emit()
+        return True
 
-    def init_clients(self):
-        """ 
-        Initializes the clients.
+    def init_clients(self) -> bool:
         """
-        self.info_client = InfoClient(self.client_info)
-        self.video_client = CameraClient(self.client_info.id)
-        self.share_screen_client = ShareScreenClient(self.client_info.id)
-        self.audio_client = AudioClient(self.client_info.id)
+        Initializes the clients.
+        :returns: True if in initialization was successful, False otherwise.
+        """
+        try:
+            self.info_client = InfoClient(self.client_info)
+            self.video_client = CameraClient(self.client_info.id)
+            self.share_screen_client = ShareScreenClient(self.client_info.id)
+            self.audio_client = AudioClient(self.client_info.id)
 
-        # must be a list because chat client will be added
-        self.clients = [self.info_client, self.video_client,
-                        self.share_screen_client, self.audio_client]
+            # must be a list because chat client will be added
+            self.clients += [self.info_client, self.video_client,
+                             self.share_screen_client, self.audio_client]
+            return True
+        except socket.error as e:
+            self.handle_network_error(str(e))
+        return False
 
     def connect_clients(self):
         """ Connects the clients' signals to the corresponding functions. """
@@ -96,6 +92,8 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.share_screen_client.frame_received.connect(
             self.show_shared_screen)
+        for client in self.clients:
+            client.network_error.connect(self.handle_network_error)
 
     def handle_new_info(self, info: tuple):
         """
@@ -207,8 +205,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.main_vertical_splitter)
         self.shared_screen.hide()
 
-    def show_shared_screen(self, frame: np.ndarray, client_id: bytes):
-        """ Shows a given frame in the shared screen. """
+    def show_shared_screen(self, frame, client_id: bytes):
+        """
+        Shows a given frame in the shared screen.
+        :param frame: a frame of the shared screen (numpy array).
+        :param client_id: the id of the client who sent it.
+        """
         # show the frame only if the shared screen is visible
         if self.shared_screen.isVisible():
             self.shared_screen.show_frame(frame)
@@ -301,6 +303,16 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).moveEvent(event)
         self.remote_window_container.set_main_window_pos(event.pos())
 
+    def handle_network_error(self, details: str):
+        """
+        Handles a network error from the clients -
+        displays an error message and exits.
+        """
+        if self.running:
+            self.running = False
+            MainWindow.show_error_msg('Network error', details)
+            self.exit()
+
     def exit(self):
         """ Closes the clients and the gui. """
         for client in self.clients:
@@ -311,8 +323,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_error_msg(text: str, info_text: str):
         """ Shows an error message with given text. """
         msg = QtWidgets.QMessageBox()
-        msg.setIcon(
-            QtWidgets.QMessageBox.Critical)  # QtWidgets.QMessageBox.Warning
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setText(text)
         msg.setInformativeText(info_text)
         msg.setWindowTitle('Error')
@@ -331,8 +342,8 @@ def main():
 
     # create the main window
     win = MainWindow()
-    win.setup(ClientInfo(b'100', 'TestUser'))
-    # win.setup(ClientInfo(b'102', 'TestUser2'))
+    if not win.setup(ClientInfo(b'100', 'TestUser')):
+        return
     win.show()
 
     # start the event loop

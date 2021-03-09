@@ -11,3 +11,7 @@ So far I have made the following features, all of them work between multiple use
 - Writing in a "remote" window (currently notepad, reflects the text that each user writes to all the others)
 
 ![alt text](screenshots/screenshot11.1.png?raw=true)
+
+## Run
+- Server: python -m server.main_server
+- Client: python -m GUI.opening_window

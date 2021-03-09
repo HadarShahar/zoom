@@ -2,12 +2,6 @@
     Hadar Shahar
     The main server code.
 """
-import sys
-
-# add the parent directory to the "module search path"
-# in order to import files from other folders
-sys.path.insert(0, '..')
-
 from registry.registry_constants import *
 from server.broadcast_tcp_server import BroadcastTcpServer
 from server.broadcast_udp_server import BroadcastUdpServer

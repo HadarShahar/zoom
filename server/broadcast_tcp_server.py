@@ -5,9 +5,9 @@
 import socket
 import sys
 import threading
-from constants import NUMBER_OF_WAITING_CONNECTIONS, EXIT_SIGN
+from network.constants import NUMBER_OF_WAITING_CONNECTIONS, EXIT_SIGN
 from server.participant import Participant
-from tcp_network_protocol import create_packet, send_packet, recv_packet
+from network.tcp_network_utils import create_packet, recv_packet
 
 
 class BroadcastTcpServer(threading.Thread):
@@ -156,4 +156,4 @@ class BroadcastTcpServer(threading.Thread):
         for par_id, par in self.participants.items():
             if par != sender_par:
                 with par.lock:
-                    par.in_socket.send(packet)  # TODO maybe use sendall
+                    par.in_socket.sendall(packet)

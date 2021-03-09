@@ -1,40 +1,7 @@
 """
     Hadar Shahar
-    constants file
+    General info messages.
 """
-
-# the parameter for socket.listen()
-NUMBER_OF_WAITING_CONNECTIONS = 100
-
-# the VideoCapture image size
-DEFAULT_VIDEO_WIDTH = 640
-DEFAULT_VIDEO_HEIGHT = 480
-DIVIDER = 1
-VIDEO_WIDTH = DEFAULT_VIDEO_WIDTH / DIVIDER
-VIDEO_HEIGHT = DEFAULT_VIDEO_HEIGHT / DIVIDER
-
-# the quality of the image from 0 to 100 (the higher is the better)
-JPEG_QUALITY = 80  # default is 95
-
-# MSG_LEN = 4  # 8
-CHUNK_SIZE = 1024
-EOF = b'-1'
-EXIT_SIGN = b'EXIT'
-
-
-# '>' for big-endian (network byte order is always big-endian)
-# 'I' for unsigned int which takes 4 bytes
-NETWORK_BYTES_FORMAT = '>I'
-# The number of bytes each number takes (according to NETWORK_BYTES_FORMAT)
-NETWORK_BYTES_PER_NUM = 4
-
-# "For best match with hardware and network realities, the value of bufsize
-# should be a relatively small power of 2, for example, 4096."
-UDP_SOCKET_BUFFER_SIZE = 4096
-
-# when a udp client connects to the meeting, it sends this message
-# to the udp server to inform it that it has connected
-UDP_NEW_CLIENT_MSG = b'HELLO'
 
 
 # from enum import Enum

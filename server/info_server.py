@@ -3,8 +3,8 @@
     The info server code.
 """
 import pickle
-from tcp_network_protocol import create_packet, send_packet, recv_packet
-from constants import Info
+from network.tcp_network_utils import create_packet, send_packet, recv_packet
+from network.custom_messages.general_info import Info
 from server.broadcast_tcp_server import BroadcastTcpServer
 from server.participant import Participant
 

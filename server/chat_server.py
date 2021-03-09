@@ -3,8 +3,8 @@
     The chat server code.
 """
 import pickle
-from tcp_network_protocol import create_packet
-from custom_messages.chat_msg import ChatMsg
+from network.tcp_network_utils import create_packet
+from network.custom_messages.chat_msg import ChatMsg
 from server.broadcast_tcp_server import BroadcastTcpServer
 from server.participant import Participant
 
@@ -29,5 +29,4 @@ class ChatServer(BroadcastTcpServer):
             self.broadcast(par, packet)
         else:
             if msg.recipient_id in self.participants:
-                # TODO maybe use sendall
-                self.participants[msg.recipient_id].in_socket.send(packet)
+                self.participants[msg.recipient_id].in_socket.sendall(packet)

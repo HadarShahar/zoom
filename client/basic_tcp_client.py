@@ -3,11 +3,10 @@
     BasicTcpClient.
 """
 import socket
-import sys
 from abc import ABC
 from client.basic_client import BasicClient
-from constants import EXIT_SIGN
-from tcp_network_protocol import create_packet
+from network.constants import EXIT_SIGN
+from network.tcp_network_utils import create_packet
 
 
 class BasicTcpClient(BasicClient, ABC):
@@ -27,16 +26,20 @@ class BasicTcpClient(BasicClient, ABC):
             # send the client id to the server
             self.send_packet(self.id)
 
-        except socket.error as msg:  # TODO nice exit
-            print('Connection failure: %s\n terminating program' % msg)
-            sys.exit(1)
+        except socket.error as e:
+            # prints the full class name and the exception
+            print(type(self), e)
+            raise e  # will be handled in the main window
 
     def send_packet(self, data: bytes):
         """ Creates a packet of data and sends it.  """
-        self.out_socket.send(create_packet(data))
-        # TODO: maybe use sendall
-        # if len(data) != sent:
-        #     print(len(data), sent)
+        try:
+            self.out_socket.sendall(create_packet(data))
+        except socket.error as e:
+            if self.running:
+                # prints the full class name and the exception
+                print(type(self), e)
+                self.network_error.emit(str(e))
 
     def close(self):
         """
@@ -46,7 +49,7 @@ class BasicTcpClient(BasicClient, ABC):
         super(BasicTcpClient, self).close()
         # if self.out_socket.fileno() != -1:
         # fileno() will return -1 for closed sockets.
-        if not self.out_socket._closed:
-            self.send_packet(EXIT_SIGN)
+        # if not self.out_socket._closed:
+        self.send_packet(EXIT_SIGN)
         self.in_socket.close()
         self.out_socket.close()

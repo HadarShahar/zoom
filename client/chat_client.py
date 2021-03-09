@@ -4,8 +4,8 @@
 """
 import pickle
 from PyQt5.QtCore import pyqtSignal
-from tcp_network_protocol import recv_packet
-from custom_messages.chat_msg import ChatMsg
+from network.tcp_network_utils import recv_packet
+from network.custom_messages.chat_msg import ChatMsg
 from client.network_constants import Constants
 from client.basic_tcp_client import BasicTcpClient
 
@@ -13,6 +13,7 @@ from client.basic_tcp_client import BasicTcpClient
 class ChatClient(BasicTcpClient):
     """ Definition of the class ChatClient. """
 
+    # this signal is emitted when a new chat message is received
     new_msg = pyqtSignal(ChatMsg)
 
     def __init__(self, client_id: bytes):

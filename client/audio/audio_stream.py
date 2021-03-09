@@ -14,6 +14,9 @@ class AudioStream(object):
     FORMAT = pyaudio.paInt16  # 16 bits per sample
     CHANNELS = 1              # this value is 2 in the documentation example
     RATE = 44100              # record at 44100 samples per second
+
+    # if the max number in a chunk is less than this threshold,
+    # this chunk is considered silent
     SILENT_THRESHOLD = 500
 
     def __init__(self, input=True, output=True):

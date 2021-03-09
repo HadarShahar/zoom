@@ -1,9 +1,0 @@
-generate python code from .ui file:
-pyuic5 -x test.ui -o test.py
-
-
-https://stackoverflow.com/questions/9957195/updating-gui-elements-in-multithreaded-pyqt
-
-New signals should only be defined in sub-classes of QObject
-
-https://www.riverbankcomputing.com/static/Docs/PyQt5/signals_slots.html#PyQt5.QtCore.pyqtSlot

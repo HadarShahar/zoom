@@ -4,7 +4,7 @@
 """
 import socket
 import struct
-from constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM
+from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM
 
 
 def create_packet(data: bytes) -> bytes:
@@ -30,18 +30,15 @@ def recv_packet(sock: socket.socket) -> bytearray:
 
 def send_packet(sock: socket.socket, data: bytes):
     """
-    sends a packet of data to a given socket
+    Sends a packet of data to a given socket.
     """
-    sock.send(create_packet(data))
-    # TODO: maybe use sendall
-    # if len(data) != sent:
-    #     print(len(data), sent)
+    sock.sendall(create_packet(data))
 
 
 def recvall(sock: socket.socket, n: int) -> bytearray:
     """
-    receives n bytes from a given socket
-    (the method socket.recv(n) receives maximum n bytes)
+    Receives n bytes from a given socket
+    (the method socket.recv(n) receives maximum n bytes).
     """
     buffer = bytearray()
     while len(buffer) < n:

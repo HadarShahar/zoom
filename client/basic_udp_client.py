@@ -3,12 +3,11 @@
     BasicUdpClient.
 """
 import socket
-import sys
 import struct
 from abc import ABC
 from client.basic_client import BasicClient
-from constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
-    UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG, EXIT_SIGN
+from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
+    UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG
 
 
 class BasicUdpClient(BasicClient, ABC):
@@ -18,21 +17,17 @@ class BasicUdpClient(BasicClient, ABC):
                  client_id: bytes, is_sharing=True):
         """ Initializes input and output sockets. """
         super(BasicUdpClient, self).__init__(client_id, is_sharing)
-        try:
-            self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.server_out_address = (ip, in_socket_port)
-            self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.server_in_address = (ip, out_socket_port)
 
-            # inform the server that a new client has connected
-            # NOTE: this message must be sent from the input socket,
-            #       so the server will know where to send the data to.
-            self.in_socket.sendto(self.pack_data(UDP_NEW_CLIENT_MSG),
-                                  self.server_in_address)
+        self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_out_address = (ip, in_socket_port)
+        self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_in_address = (ip, out_socket_port)
 
-        except socket.error as msg:  # TODO nice exit
-            print('Connection failure: %s\n terminating program' % msg)
-            sys.exit(1)
+        # inform the server that a new client has connected
+        # NOTE: this message must be sent from the input socket,
+        #       so the server will know where to send the data to.
+        self.in_socket.sendto(self.pack_data(UDP_NEW_CLIENT_MSG),
+                              self.server_in_address)
 
     def pack_data(self, data: bytes) -> bytes:
         """
