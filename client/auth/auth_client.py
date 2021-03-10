@@ -28,7 +28,7 @@ class AuthClient(QThread):
     STATE_TOKEN_SEED_LEN = 1024
 
     # this signal is emitted when the client_info is received
-    # from the server (after the client signs in with google)
+    # from the server (after the client signs in)
     recv_client_info_signal = pyqtSignal(ClientInfo)
 
     network_error = pyqtSignal(str)  # details
@@ -84,14 +84,17 @@ class AuthClient(QThread):
                   None otherwise.
         """
         try:
-            response = requests.post(self.server_url + endpoint,
-                                     json=payload).json()
-            if response:
-                client_info = ClientInfo.from_json(response)
+            response = requests.post(self.server_url + endpoint, json=payload)
+            if response.ok:
+                client_info = ClientInfo.from_json(response.json())
                 self.recv_client_info_signal.emit(client_info)
                 return client_info
+            else:
+                self.network_error.emit(f'response status_code:' +
+                                        f'{response.status_code}')
         except requests.exceptions.ConnectionError as e:
-            self.network_error.emit('The server is down, please try again later.')
+            self.network_error.emit('The server is down, '
+                                    'please try again later.')
 
     def generate_state_token(self):
         """

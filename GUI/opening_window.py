@@ -4,12 +4,13 @@
 """
 import sys
 import threading
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5 import QtWidgets, uic, QtGui
 from GUI.gui_constants import *
 from GUI.main_window import MainWindow
 from client.auth.auth_client import AuthClient
 from network.custom_messages.client_info import ClientInfo
 from GUI.gui_constants import OPENING_WINDOW_UI_FILE_PATH, LOADING_GIF_PATH
+from GUI.window_utils import bring_win_to_front, show_error_window
 
 
 class OpeningWindow(QtWidgets.QWidget):
@@ -19,7 +20,7 @@ class OpeningWindow(QtWidgets.QWidget):
         """ Constructor. """
         super(OpeningWindow, self).__init__()
         uic.loadUi(OPENING_WINDOW_UI_FILE_PATH, self)
-        self.setWindowTitle("Hadar's Zoom")
+        self.setWindowTitle(self.title.text())
 
         self.auth_client = AuthClient()
         self.auth_client.start()
@@ -61,7 +62,7 @@ class OpeningWindow(QtWidgets.QWidget):
         It sets up the main window.
         """
         print('received_client_info:', client_info)
-        OpeningWindow.bring_win_to_front(self)
+        bring_win_to_front(self)
         self.show_loading()
         self.main_window.setup(client_info)
         # threading.Thread(target=self.main_window.start_clients).start()
@@ -76,27 +77,14 @@ class OpeningWindow(QtWidgets.QWidget):
         """ Handles network error from the auth client. """
         self.loading_frame.hide()
         self.login_frame.show()
-        self.main_window.handle_network_error(details)
+        bring_win_to_front(self)
+        show_error_window('Network error', details)
 
     def start_main_window(self):
         """ Closes this window and start the main window. """
         self.close()
         self.main_window.show()
-        OpeningWindow.bring_win_to_front(self.main_window)
-
-    @staticmethod
-    def bring_win_to_front(window):
-        """
-        Brings a given window to the front and acts like a "normal" window
-        (can be underneath if another window is raised).
-        """
-        # set always on top flag, makes window disappear
-        window.setWindowFlags(window.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-        window.show()  # makes window reappear, but it's ALWAYS on top
-
-        # clear always on top flag, makes window disappear
-        window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
-        window.show()  # makes window reappear, acts like normal window
+        bring_win_to_front(self.main_window)
 
 
 def main():

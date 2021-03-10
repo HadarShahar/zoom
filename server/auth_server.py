@@ -19,17 +19,30 @@ class AuthServer(threading.Thread):
     # next_client_id = 0
     CLIENT_ID_LEN = 8  # in bytes
 
+    # colors for missing credentials error
+    COLORS_FAIL = '\033[91m'
+    COLORS_ENDC = '\033[0m'
+
     def __init__(self, port: int):
         """ Constructor. """
         super(AuthServer, self).__init__()
-        load_dotenv()
-        self.google_client_id = os.environ['GOOGLE_CLIENT_ID']
-        self.google_client_secret = os.environ['GOOGLE_CLIENT_SECRET']
-
         self.port = port
         self.app = Flask(__name__)
-        self.app.add_url_rule('/auth/google', 'google_auth',
-                              self.google_auth, methods=['POST'])
+
+        load_dotenv()
+        self.google_client_id = os.environ.get('GOOGLE_CLIENT_ID', None)
+        self.google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', None)
+
+        if self.google_client_id and self.google_client_secret:
+            self.app.add_url_rule('/auth/google', 'google_auth',
+                                  self.google_auth, methods=['POST'])
+        else:
+            print(AuthServer.COLORS_FAIL +
+                  'Missing OAuth 2.0 credentials: ' +
+                  'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.\n' +
+                  'Cannot authenticate the user using google API.' +
+                  AuthServer.COLORS_ENDC)
+
         self.app.add_url_rule('/auth/name', 'name_auth',
                               self.name_auth, methods=['POST'])
 

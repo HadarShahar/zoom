@@ -1,7 +1,7 @@
 """
     Hadar Shahar
 
-    All the constants that will be written in the registry.
+    The network constants that will be written in the client registry.
 """
 
 SERVER_IP = '172.29.229.95'        # the server ip

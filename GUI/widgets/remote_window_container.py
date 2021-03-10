@@ -10,6 +10,9 @@ from win32.remote_notepad import RemoteNotepad
 class RemoteWindowContainer(QtWidgets.QWidget):
     """ Definition of the class RemoteWindowContainer. """
 
+    # the number of pixels between the remote window and its container
+    PADDING = 7
+
     def __init__(self, parent: QtWidgets.QWidget):
         """ Constructor. """
         super(RemoteWindowContainer, self).__init__(parent)
@@ -53,9 +56,8 @@ class RemoteWindowContainer(QtWidgets.QWidget):
     def update_remote_window(self):
         """ Updates the remote window size and position. """
         if self.remote_window.is_open:
-            padding = 7
-            x = self.main_window_pos.x() + self.x() - padding
-            y = self.main_window_pos.y() + self.y() + padding
-            w = self.width() + 2 * padding
-            h = self.height() + padding
+            x = self.main_window_pos.x() + self.x() - self.PADDING
+            y = self.main_window_pos.y() + self.y() + self.PADDING
+            w = self.width() + 2 * self.PADDING
+            h = self.height() + self.PADDING
             self.remote_window.set_window_pos(x, y, w, h)

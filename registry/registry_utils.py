@@ -1,15 +1,14 @@
 """
     Hadar Shahar
 
-    Functions to read and write constants (from the file registry_constants)
-    to the registry.
+    Functions to read and write constants to the registry.
 
     *********
     NOTE: this file must run with elevated privileges
     in order to write values to the registry
     *********
 """
-from registry import registry_constants
+from server import network_constants
 import winreg
 
 PROJECT_NAME = 'Hadar Zoom'
@@ -37,6 +36,7 @@ def get_saved_values(names: list) -> list:
         return values
     except WindowsError as e:
         print('get_saved_values:', e)
+        return []
 
 
 def get_reg_local_machine(path: str, name: str):
@@ -70,13 +70,15 @@ def set_reg(name: str, value):
         print('set_reg:', e)
 
 
-def set_reg_values():
+def set_reg_values(input_file):
     """
-    Iterates through the global variables in the file registry_constants.py
+    Iterates through the global variables in the given file
     and saves each one of them in the registry.
+    :param input_file: the python module that contains all the constants
+                       that will be saved in the registry.
     """
     print(f'saving values at: "HKEY_LOCAL_MACHINE\\{REG_PATH}"')
-    global_vars = vars(registry_constants)
+    global_vars = vars(input_file)
     for name, value in global_vars.items():
         # skip special variables like __doc__
         if name.startswith('__'):
@@ -85,18 +87,21 @@ def set_reg_values():
         set_reg(name, value)
 
 
-def generate_reg_file(output_file='registry\\reg_constants.reg'):
+def generate_reg_file(input_file, output_file='registry\\reg_constants.reg'):
     """
     Generates a .reg file ready to be double clicked
     to save all the values in the registry at HKEY_LOCAL_MACHINE\\{REG_PATH}.
     These values are all the global variables
-    in the file registry_constants.py.
+    in the given input_file.
+    :param input_file: the python module that contains all the constants
+                       that will be saved in the registry.
+    :param output_file: the name of the output file.
     """
     with open(output_file, 'w') as file:
         file.write('Windows Registry Editor Version 5.00\n\n')
         file.write(f'[HKEY_LOCAL_MACHINE\\{REG_PATH}]\n')
 
-        global_vars = vars(registry_constants)
+        global_vars = vars(input_file)
         for name, value in global_vars.items():
             # skip special variables like __doc__
             if name.startswith('__'):
@@ -117,5 +122,5 @@ def generate_reg_file(output_file='registry\\reg_constants.reg'):
 
 
 if __name__ == '__main__':
-    # set_reg_values()
-    generate_reg_file()
+    # set_reg_values(network_constants)
+    generate_reg_file(network_constants)

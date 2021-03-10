@@ -42,7 +42,7 @@ class LocalWebServer(object):
                 self.shutdown()
                 return f'Hello {client_info.name}!' \
                        f'<br>You can return to the app now.'
-            return 'Malformed authorization response.'
+            return 'Network error.'
         return 'Missing required "code" param.'
 
     def shutdown(self):

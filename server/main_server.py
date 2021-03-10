@@ -2,7 +2,7 @@
     Hadar Shahar
     The main server code.
 """
-from registry.registry_constants import *
+from server.network_constants import *
 from server.broadcast_tcp_server import BroadcastTcpServer
 from server.broadcast_udp_server import BroadcastUdpServer
 from server.auth_server import AuthServer

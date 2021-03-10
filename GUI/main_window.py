@@ -18,6 +18,7 @@ from GUI.smart_board.smart_board import SmartBoard
 from GUI.widgets.basic_video_widget import BasicVideoWidget
 from GUI.controls_bar.toggle_widget import ToggleWidget
 from GUI.widgets.remote_window_container import RemoteWindowContainer
+from GUI.window_utils import bring_win_to_front, show_error_window
 
 from client.info_client import InfoClient
 from client.video.camera_client import CameraClient
@@ -241,8 +242,8 @@ class MainWindow(QtWidgets.QMainWindow):
                    self.remote_window_container)
         for widget in widgets:
             if widget.isVisible():
-                self.show_error_msg("Can't start sharing",
-                                    "A participant is already sharing.")
+                show_error_window("Can't start sharing",
+                                  "A participant is already sharing.")
                 return False
         return True
 
@@ -310,7 +311,9 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         if self.running:
             self.running = False
-            MainWindow.show_error_msg('Network error', details)
+            if self.isVisible():
+                bring_win_to_front(self)
+            show_error_window('Network error', details)
             self.exit()
 
     def exit(self):
@@ -318,16 +321,6 @@ class MainWindow(QtWidgets.QMainWindow):
         for client in self.clients:
             client.close()
         self.close()  # close the gui
-
-    @staticmethod
-    def show_error_msg(text: str, info_text: str):
-        """ Shows an error message with given text. """
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Critical)
-        msg.setText(text)
-        msg.setInformativeText(info_text)
-        msg.setWindowTitle('Error')
-        msg.exec_()
 
 
 def main():
