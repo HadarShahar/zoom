@@ -3,13 +3,12 @@
     BasicTcpVideoClient.
 """
 import numpy as np
-import cv2
 from PyQt5.QtCore import pyqtSignal
 from abc import abstractmethod
 from network.constants import CHUNK_SIZE, EOF
 from network.tcp_network_utils import recv_packet
 from client.basic_tcp_client import BasicTcpClient
-from client.video.video_camera import VideoCamera
+from client.video.video_encoder import VideoEncoder
 
 
 class BasicTcpVideoClient(BasicTcpClient):
@@ -52,7 +51,7 @@ class BasicTcpVideoClient(BasicTcpClient):
             self.frame_captured.emit(frame)
 
             # convert the frame (numpy.ndarray) to bytes
-            data = BasicTcpVideoClient.encode_frame(frame)
+            data = VideoEncoder.encode_frame(frame)
             # send the data in chunks to the server
             for i in range(0, len(data), CHUNK_SIZE):
                 chunk = data[i: i + CHUNK_SIZE]
@@ -78,33 +77,15 @@ class BasicTcpVideoClient(BasicTcpClient):
                 else:
                     clients_buffers[sender_id] = bytearray(data)
             else:
-                frame = self.decode_frame_buffer(clients_buffers[sender_id])
+                frame = VideoEncoder.decode_frame_buffer(
+                    clients_buffers[sender_id])
 
                 if frame is not None:  # TODO check why frame can be None
                     # cv2.imshow(f'frame from client {sender_id}', frame)
                     # cv2.waitKey(1)
                     self.frame_received.emit(frame, sender_id)
                 else:
-                    print('check why this happened ', '#'*30, sender_id, frame)
+                    print('check why this happened ', '#' * 30, sender_id,
+                          frame)
 
                 clients_buffers[sender_id] = bytearray()
-
-    @staticmethod
-    def encode_frame(frame: np.ndarray) -> bytes:
-        """
-        Receives a frame, encodes it to JPEG format
-        and converts it to bytes.
-        """
-        # change the quality of the image
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),
-                        VideoCamera.JPEG_QUALITY]
-        flag, encoded_image = cv2.imencode('.jpg', frame, encode_param)
-        data = encoded_image.tobytes()
-        return data
-
-    @staticmethod
-    def decode_frame_buffer(buffer: bytes):
-        """ Decodes the buffer as a cv2 image. """
-        # unit8 = the dtype of the encoded_image
-        frame = np.frombuffer(buffer, dtype=np.uint8)
-        return cv2.imdecode(frame, cv2.IMREAD_COLOR)

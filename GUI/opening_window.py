@@ -34,7 +34,8 @@ class OpeningWindow(QtWidgets.QWidget):
         # whenever the user presses the enter key while in it
         self.name_input.returnPressed.connect(self.name_sign_in)
 
-        # when the text in the name_input is edited, hide the no_name_error_label
+        # when the text in the name_input is edited,
+        # hide the no_name_error_label
         self.name_input.textEdited.connect(self.no_name_error_label.hide)
         # self.name_input.setFocus()
 

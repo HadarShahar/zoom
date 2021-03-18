@@ -16,9 +16,6 @@ class VideoCamera(object):
     VIDEO_WIDTH = DEFAULT_VIDEO_WIDTH / DIVIDER
     VIDEO_HEIGHT = DEFAULT_VIDEO_HEIGHT / DIVIDER
 
-    # the quality of the image from 0 to 100 (the higher is the better)
-    JPEG_QUALITY = 80  # default is 95
-
     # 1 to flip the image around the y-axis (0 to flip around the x-axis)
     FLIP_AXIS = 1
 

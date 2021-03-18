@@ -3,13 +3,12 @@
     BasicVideoClient.
 """
 import numpy as np
-import cv2
 from PyQt5.QtCore import pyqtSignal
 from abc import abstractmethod
 from client.basic_udp_client import BasicUdpClient
 from client.video.udp_packet import UdpPacket
 from client.video.udp_packets_handler import UdpPacketsHandler
-from client.video.video_camera import VideoCamera
+from client.video.video_encoder import VideoEncoder
 
 
 class BasicUdpVideoClient(BasicUdpClient):
@@ -53,7 +52,7 @@ class BasicUdpVideoClient(BasicUdpClient):
             self.frame_captured.emit(frame)
 
             # convert the frame (numpy.ndarray) to bytes
-            data = BasicUdpVideoClient.encode_frame(frame)
+            data = VideoEncoder.encode_frame(frame)
 
             packets = UdpPacketsHandler.create_packets(self.frame_index, data)
             for p in packets:
@@ -79,25 +78,5 @@ class BasicUdpVideoClient(BasicUdpClient):
             p = UdpPacket.decode(data)
             buffer = clients_handlers[sender_id].process_packet(p)
             if buffer is not None:
-                frame = BasicUdpVideoClient.decode_frame_buffer(buffer)
+                frame = VideoEncoder.decode_frame_buffer(buffer)
                 self.frame_received.emit(frame, sender_id)
-
-    @staticmethod
-    def encode_frame(frame: np.ndarray) -> bytes:
-        """
-        Receives a frame, encodes it to JPEG format
-        and converts it to bytes.
-        """
-        # change the quality of the image
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),
-                        VideoCamera.JPEG_QUALITY]
-        flag, encoded_image = cv2.imencode('.jpg', frame, encode_param)
-        data = encoded_image.tobytes()
-        return data
-
-    @staticmethod
-    def decode_frame_buffer(buffer: bytes):
-        """ Decodes the buffer as a cv2 image. """
-        # unit8 = the dtype of the encoded_image
-        frame = np.frombuffer(buffer, dtype=np.uint8)
-        return cv2.imdecode(frame, cv2.IMREAD_COLOR)

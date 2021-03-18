@@ -11,8 +11,8 @@ from win32con import *
 from ctypes.wintypes import DWORD
 from PyQt5.QtCore import pyqtSignal, QMutex
 
-from win32.remote_window import RemoteWindow
-from win32.notepad_state import NotepadState
+from GUI.win32.remote_window import RemoteWindow
+from GUI.win32.notepad_state import NotepadState
 from network.custom_messages.remote_window_msg import RemoteWindowMsg
 
 user32 = ctypes.WinDLL('User32.dll')
@@ -27,12 +27,6 @@ class RemoteNotepad(RemoteWindow):
 
     PROGRAM_NAME = 'notepad.exe'
     EDIT_CLASS_NAME = 'Edit'  # the class name of the child window, the editor
-
-    # PROGRAM_NAME = r'C:\Program Files\Notepad++\notepad++.exe'
-    # EDIT_CLASS_NAME = 'Scintilla'
-    # PROGRAM_NAME = r'C:\Users\user\AppData\Local\Programs' \
-    #                r'\Microsoft VS Code\Code.exe'
-    # EDIT_CLASS_NAME = 'Chrome_WidgetWin_1'
 
     # if the difference in the text length is greater than this threshold,
     # send all the text to sync the editors.

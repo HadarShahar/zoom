@@ -36,14 +36,15 @@ class BroadcastTcpServer(threading.Thread):
             print(f'{self.server_name} server listening on ports '
                   f'{client_in_port}, {client_out_port}')
 
-            # TODO: maybe add a lock
             # participants that are connecting to the meeting
             # {hostaddr: Participant(...)}
             self.connecting_pars: [str, Participant] = {}
+            self.connecting_pars_lock = threading.Lock()
 
             # connected participants in the meeting
             # {par_id: Participant(...)}
             self.participants: [bytes, Participant] = {}
+            self.participants_lock = threading.Lock()
 
         except socket.error as msg:
             print(f'{self.server_name} connection failure: {msg}')
@@ -74,14 +75,15 @@ class BroadcastTcpServer(threading.Thread):
         while True:
             client_socket, address = sock.accept()
             hostaddr, port = address
-            if hostaddr in self.connecting_pars:
-                par = self.connecting_pars[hostaddr]
-                setattr(par, client_sock_name, client_socket)
-                self.add_participant(par)
-            else:
-                par = Participant(address)
-                setattr(par, client_sock_name, client_socket)
-                self.connecting_pars[hostaddr] = par
+            with self.connecting_pars_lock:
+                if hostaddr in self.connecting_pars:
+                    par = self.connecting_pars[hostaddr]
+                    setattr(par, client_sock_name, client_socket)
+                    self.add_participant(par)
+                else:
+                    par = Participant(address)
+                    setattr(par, client_sock_name, client_socket)
+                    self.connecting_pars[hostaddr] = par
 
     def add_participant(self, par: Participant):
         """
@@ -112,10 +114,10 @@ class BroadcastTcpServer(threading.Thread):
         """
         try:
             self.update_par_id(par)
-            self.participants[par.id] = par
-            # print(f'New participant: {par}')
-            print(f'{self.server_name} participants:',
-                  self.participants.values())
+            with self.participants_lock:
+                self.participants[par.id] = par
+                print(f'{self.server_name} participants:',
+                      self.participants.values())
 
             while True:
                 data = recv_packet(par.out_socket)
@@ -143,17 +145,19 @@ class BroadcastTcpServer(threading.Thread):
         closes its sockets and removes it from the participants list.
         """
         # print(f'{par} has disconnected')
-        par.close_sockets()
-        if par.id in self.participants:
-            del self.participants[par.id]
-        print(f'{self.server_name} participants:', self.participants.values())
+        with self.participants_lock:
+            par.close_sockets()
+            if par.id in self.participants:
+                del self.participants[par.id]
+            print(f'{self.server_name} participants:', self.participants.values())
 
     def broadcast(self, sender_par: Participant, packet: bytes):
         """
         Broadcasts a given packet (or chained packets) of data
         to all the participants, except the one who sends the data.
         """
-        for par_id, par in self.participants.items():
-            if par != sender_par:
-                with par.lock:
-                    par.in_socket.sendall(packet)
+        with self.participants_lock:
+            for par_id, par in self.participants.items():
+                if par != sender_par:
+                    with par.lock:
+                        par.in_socket.sendall(packet)

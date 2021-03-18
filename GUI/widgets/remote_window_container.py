@@ -4,7 +4,7 @@
 """
 from PyQt5 import QtWidgets, QtCore, QtGui
 from GUI.widgets.basic_video_widget import BasicVideoWidget
-from win32.remote_notepad import RemoteNotepad
+from GUI.win32.remote_notepad import RemoteNotepad
 
 
 class RemoteWindowContainer(QtWidgets.QWidget):

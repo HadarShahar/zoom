@@ -2,21 +2,21 @@ import cv2
 import random
 from client.video.udp_packet import UdpPacket
 from client.video.udp_packets_handler import UdpPacketsHandler
-from client.video.basic_udp_video_client import BasicUdpVideoClient
+from client.video.video_encoder import VideoEncoder
 
 
 def received_new_packet(packets_handler: UdpPacketsHandler, packet: UdpPacket):
     data = packets_handler.process_packet(packet)
     if data is not None:
         print('Got a frame!')
-        frame = BasicUdpVideoClient.decode_frame_buffer(data)
+        frame = VideoEncoder.decode_frame_buffer(data)
         cv2.imshow('frame', frame)
         cv2.waitKey()
 
 
 def main():
     frame = cv2.imread('space.jpg')
-    encoded_frame = BasicUdpVideoClient.encode_frame(frame)
+    encoded_frame = VideoEncoder.encode_frame(frame)
     # print(len(frame.tobytes()) / len(encoded_frame))
 
     packets = UdpPacketsHandler.create_packets(0, encoded_frame)

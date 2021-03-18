@@ -38,7 +38,6 @@ class VideoGrid(QtWidgets.QFrame):
         Returns the video widget that corresponds to
         the given client_id.
         """
-        # TODO check if client_id is always a key in self.video_widgets
         return self.video_widgets[client_id]
 
     def add_video_widget(self, client_info: ClientInfo) -> bool:

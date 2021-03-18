@@ -1,12 +1,12 @@
 """
     Hadar Shahar
-    RemoteNotepad.
+    NotepadState.
 """
 
 
 class NotepadState(object):
     """
-    Definition of the class RemoteNotepad.
+    Definition of the class NotepadState.
     It represents a notepad window state.
     """
 
