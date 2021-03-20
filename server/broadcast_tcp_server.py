@@ -76,7 +76,6 @@ class BroadcastTcpServer(threading.Thread):
             client_socket, address = sock.accept()
             hostaddr, port = address
             with self.connecting_pars_lock:
-                print(self.connecting_pars)
                 if hostaddr in self.connecting_pars:
                     par = self.connecting_pars[hostaddr]
                     setattr(par, client_sock_name, client_socket)
