@@ -32,7 +32,13 @@ class AuthServer(threading.Thread):
         load_dotenv()
         self.google_client_id = os.environ.get('GOOGLE_CLIENT_ID', None)
         self.google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', None)
+        self.create_endpoints()
 
+        # self.connecting_clients_ids = []
+        # self.current_clients_ids = []
+
+    def create_endpoints(self):
+        """ Creates endpoints for the server. """
         if self.google_client_id and self.google_client_secret:
             self.app.add_url_rule('/auth/google', 'google_auth',
                                   self.google_auth, methods=['POST'])

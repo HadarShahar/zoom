@@ -18,7 +18,7 @@ class UdpPacket:
     BYTES_FORMAT = f'>{NUMS_IN_HEADER}I'
 
     # The max data size in each packet.
-    # Must be less than constants.UDP_SOCKET_BUFFER_SIZE
+    # Must be less than network.constants.UDP_SOCKET_BUFFER_SIZE
     MAX_DATA_SIZE = 2048
 
     def __init__(self, frame_index: int, packet_index: int,

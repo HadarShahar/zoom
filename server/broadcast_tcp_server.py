@@ -76,6 +76,7 @@ class BroadcastTcpServer(threading.Thread):
             client_socket, address = sock.accept()
             hostaddr, port = address
             with self.connecting_pars_lock:
+                print(self.connecting_pars)
                 if hostaddr in self.connecting_pars:
                     par = self.connecting_pars[hostaddr]
                     setattr(par, client_sock_name, client_socket)
@@ -117,7 +118,7 @@ class BroadcastTcpServer(threading.Thread):
             with self.participants_lock:
                 self.participants[par.id] = par
                 print(f'{self.server_name} participants:',
-                      self.participants.values())
+                      list(self.participants.values()))
 
             while True:
                 data = recv_packet(par.out_socket)
@@ -149,7 +150,8 @@ class BroadcastTcpServer(threading.Thread):
             par.close_sockets()
             if par.id in self.participants:
                 del self.participants[par.id]
-            print(f'{self.server_name} participants:', self.participants.values())
+            print(f'{self.server_name} participants:',
+                  list(self.participants.values()))
 
     def broadcast(self, sender_par: Participant, packet: bytes):
         """

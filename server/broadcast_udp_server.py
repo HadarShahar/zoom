@@ -65,8 +65,8 @@ class BroadcastUdpServer(threading.Thread):
                     elif content.startswith(UDP_NEW_CLIENT_MSG):
                         # if it's a new client
                         self.clients_addresses[client_id] = client_address
-                        print(f'{self.server_name} participants: '
-                              f'{self.clients_addresses.keys()}')
+                        print(f'{self.server_name} participants:',
+                              list(self.clients_addresses.values()))
                     else:
                         print('malformed packet.')
 
@@ -90,5 +90,5 @@ class BroadcastUdpServer(threading.Thread):
         with self.clients_addresses_lock:
             if client_id in self.clients_addresses:
                 del self.clients_addresses[client_id]
-            print(f'{self.server_name} participants: '
-                  f'{self.clients_addresses.keys()}')
+            print(f'{self.server_name} participants:',
+                  list(self.clients_addresses.values()))

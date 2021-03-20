@@ -36,9 +36,7 @@ class RemoteWindow(QThread):
         # sleep to give the window time to appear
         time.sleep(RemoteWindow.INITIAL_DELAY_TIME)
 
-        # TODO check if could be several handles and why
         self.hwnd = RemoteWindow.get_hwnds_for_pid(process.pid)[0]
-
         print('created window:', repr(win32gui.GetWindowText(self.hwnd)))
         win32gui.SetWindowText(self.hwnd, 'Remote Window')
         self.is_open = True
@@ -49,8 +47,12 @@ class RemoteWindow(QThread):
         even when it is deactivated (HWND_TOPMOST),
         and doesn't activate it after the movement (SWP_NOACTIVATE).
         """
-        win32gui.SetWindowPos(self.hwnd, win32con.HWND_TOPMOST,
-                              x, y, width, height, win32con.SWP_NOACTIVATE)
+        # check if the specified window handle identifies an existing window
+        if win32gui.IsWindow(self.hwnd):
+            win32gui.SetWindowPos(self.hwnd, win32con.HWND_TOPMOST,
+                                  x, y, width, height, win32con.SWP_NOACTIVATE)
+        else:
+            self.is_open = False
 
     def close(self):
         """ Closes the window. """
@@ -64,7 +66,13 @@ class RemoteWindow(QThread):
         print(ctypes.WinError(error))
 
     @staticmethod
-    def get_hwnds_for_pid(pid):
+    def get_hwnds_for_pid(pid: int) -> list:
+        """
+        Finds the handles to the windows belonging ro a specific process,
+        given its id.
+        :param pid: the process id.
+        :return: a list of the handles
+        """
         def callback(hwnd, hwnds):
             if win32gui.IsWindowVisible(hwnd) and \
                     win32gui.IsWindowEnabled(hwnd):

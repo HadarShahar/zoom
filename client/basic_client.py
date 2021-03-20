@@ -104,5 +104,5 @@ class BasicClient(QThread, metaclass=QABCMeta):
 
     def close(self):
         """ Stops running. """
-        print('closing', type(self))
+        print('closing', type(self).__name__)
         self.running = False

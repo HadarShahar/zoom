@@ -78,7 +78,6 @@ class RemoteNotepad(RemoteWindow):
                         # A value of -1 specifies the current line number
                         current_line = self.line_from_char_index(-1)
                         data = (self.get_line_index(-1), current_line)
-                        data = (self.get_line_index(-1), current_line)
                         msg = RemoteWindowMsg(RemoteWindowMsg.REPLACE_LINE,
                                               data)
                         self.new_msg.emit(msg)
@@ -213,7 +212,7 @@ class RemoteNotepad(RemoteWindow):
             # insert empty lines at the last char index
             self.set_selection(last_char_index, last_char_index)
             empty_lines = RemoteNotepad.LINE_SEPARATOR * \
-                    (line_index + 1 - num_of_lines)
+                          (line_index + 1 - num_of_lines)
             self.msg_to_edit_control(EM_REPLACESEL, 0, empty_lines)
 
         line_beginning = self.first_char_index(line_index)
@@ -278,12 +277,20 @@ class RemoteNotepad(RemoteWindow):
         if not self.mutex.tryLock():
             print('Could not acquire mutex in get_selection()')
             return 0, 0
-
-        # TODO change this call
+        # TODO check this call
         user32.SendMessageW(self.hwnd_edit, EM_GETSEL,
                             ctypes.byref(start_pos), ctypes.byref(end_pos))
         self.mutex.unlock()
         return start_pos.value, end_pos.value
+
+        # try:
+        #     self.msg_to_edit_control(EM_GETSEL, ctypes.byref(start_pos),
+        #                              ctypes.byref(end_pos))
+        #     print(start_pos.value, end_pos.value)
+        #     return start_pos.value, end_pos.value
+        # except Exception as e:
+        #     print(e)
+        #     return 0, 0
 
     def set_selection(self, start_pos: int, end_pos: int):
         """
@@ -305,6 +312,15 @@ class RemoteNotepad(RemoteWindow):
         ret = win32gui.SendMessage(self.hwnd_edit, msg, wparam, lparam)
         self.mutex.unlock()
         return ret
+    
+    def close(self):
+        """
+        Sets the edit control's modification flag to False
+        so the window won't open a dialog asking the user consent to exit
+        and then closes the window.
+        """
+        self.set_modify_flag(False)
+        super(RemoteNotepad, self).close()
 
 
 def main():
