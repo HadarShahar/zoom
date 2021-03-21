@@ -12,11 +12,11 @@ from server.participant import Participant
 class InfoServer(BroadcastTcpServer):
     """ Definition of the class InfoServer. """
 
-    def __init__(self, ip: str, client_in_port: int,
-                 client_out_port: int, client_disconnected_callback):
+    def __init__(self, ip: str, client_in_port: int, client_out_port: int,
+                 client_disconnected_callback, client_id_validator):
         """ Constructor. """
-        super(InfoServer, self).__init__(ip, client_in_port,
-                                         client_out_port, 'info')
+        super(InfoServer, self).__init__(ip, client_in_port, client_out_port,
+                                         'info', client_id_validator)
 
         # this is a callback function in the main server
         self.client_disconnected_callback = client_disconnected_callback
@@ -26,14 +26,18 @@ class InfoServer(BroadcastTcpServer):
         # they will be sent to new client that connect to the meeting
         self.last_status_msgs = []
 
-    def update_par_id(self, par: Participant):
+    def update_par_id(self, par: Participant) -> bool:
         """
-        Updates the participant's id and info and
-        calls the function sync_info.
+        Validates the participant's id and if it's valid:
+        updates the par object, receives the client info
+        and calls the function sync_info.
+        :returns: True if the client id is valid, False otherwise.
         """
-        super(InfoServer, self).update_par_id(par)
+        if not super(InfoServer, self).update_par_id(par):
+            return False
         par.client_info = pickle.loads(recv_packet(par.out_socket))
         self.sync_info(par)
+        return True
 
     def sync_info(self, new_par: Participant):
         """

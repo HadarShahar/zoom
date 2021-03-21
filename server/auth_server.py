@@ -34,8 +34,8 @@ class AuthServer(threading.Thread):
         self.google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', None)
         self.create_endpoints()
 
-        # self.connecting_clients_ids = []
-        # self.current_clients_ids = []
+        self.current_clients_ids = []
+        self.clients_ids_lock = threading.Lock()
 
     def create_endpoints(self):
         """ Creates endpoints for the server. """
@@ -124,12 +124,34 @@ class AuthServer(threading.Thread):
         r = requests.post(AuthServer.GOOGLE_TOKEN_ENDPOINT, data=payload)
         return r.json().get('access_token', None)
 
-    @staticmethod
-    def generate_client_id() -> bytes:
-        """ Generates the client id using random bytes. """
+    def generate_client_id(self) -> bytes:
+        """ Generates the unique client id using random bytes. """
         # AuthServer.next_client_id += 1
         # return str(AuthServer.next_client_id)
-        return os.urandom(AuthServer.CLIENT_ID_LEN)
+        client_id = os.urandom(AuthServer.CLIENT_ID_LEN)
+        with self.clients_ids_lock:
+            while client_id in self.current_clients_ids:
+                client_id = os.urandom(AuthServer.CLIENT_ID_LEN)
+            self.current_clients_ids.append(client_id)
+        return client_id
+
+    def validate_client_id(self, client_id: bytes) -> bool:
+        """
+        Validates a given client id.
+        :param client_id: the client id to be validated.
+        :returns: True if it's valid, False otherwise.
+        """
+        # "with" block always executes, even after return!
+        with self.clients_ids_lock:
+            return client_id in self.current_clients_ids
+
+    def client_disconnected(self, client_id: bytes):
+        """
+        The main server calls this function when a client disconnects.
+        It removes its id from taken ids.
+        """
+        with self.clients_ids_lock:
+            self.current_clients_ids.remove(client_id)
 
     @staticmethod
     def get_user_info(access_token: str) -> dict:

@@ -12,10 +12,11 @@ from server.participant import Participant
 class ChatServer(BroadcastTcpServer):
     """ Definition of the class ChatServer. """
 
-    def __init__(self, ip: str, client_in_port: int, client_out_port: int):
+    def __init__(self, ip: str, client_in_port: int, client_out_port: int,
+                 client_id_validator):
         """ Constructor. """
-        super(ChatServer, self).__init__(ip, client_in_port,
-                                         client_out_port, 'chat')
+        super(ChatServer, self).__init__(ip, client_in_port, client_out_port,
+                                         'chat', client_id_validator)
 
     def handle_new_data(self, par: Participant, data: bytes):
         """

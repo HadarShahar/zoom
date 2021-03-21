@@ -13,13 +13,14 @@ from network.tcp_network_utils import create_packet, recv_packet
 class BroadcastTcpServer(threading.Thread):
     """ Definition of the class BroadcastTcpServer. """
 
-    def __init__(self, ip: str, client_in_port: int,
-                 client_out_port: int, server_name: str):
+    def __init__(self, ip: str, client_in_port: int, client_out_port: int,
+                 server_name: str, client_id_validator):
         """
         Initializes input and output sockets for the BroadcastServer.
         """
         super(BroadcastTcpServer, self).__init__()
         self.server_name = server_name
+        self.client_id_validator = client_id_validator
         try:
             # socket that accepts each client input socket
             self.accept_clients_in = socket.socket(socket.AF_INET,
@@ -101,19 +102,32 @@ class BroadcastTcpServer(threading.Thread):
             threading.Thread(target=self.handle_participant,
                              args=(par,)).start()
 
-    def update_par_id(self, par: Participant):
+    def update_par_id(self, par: Participant) -> bool:
         """
-        Updates the participant id.
-        This method receives the id from the client.
+        This method receives the id from the client, validates it
+        and updates the par object if it's valid.
+        :returns: True if the client id is valid, False otherwise.
         """
-        par.id = bytes(recv_packet(par.out_socket))
+        received_id = bytes(recv_packet(par.out_socket))
+
+        # "with" block always executes, even after return!
+        with self.participants_lock:
+            # there must not be a participant with the same id!
+            if received_id in [p.id for p in self.participants.values()] or \
+                    (not self.client_id_validator(received_id)):
+                print(f'Invalid id: {received_id}, ignoring the participant.')
+                return False
+
+        par.id = received_id
+        return True
 
     def handle_participant(self, par: Participant):
         """
         Handles a given participant.
         """
         try:
-            self.update_par_id(par)
+            if not self.update_par_id(par):
+                return
             with self.participants_lock:
                 self.participants[par.id] = par
                 print(f'{self.server_name} participants:',

@@ -13,11 +13,12 @@ from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
 class BroadcastUdpServer(threading.Thread):
     """ Definition of the class BroadcastUdpServer. """
 
-    def __init__(self, ip: str, client_in_port: int,
-                 client_out_port: int, server_name: str):
+    def __init__(self, ip: str, client_in_port: int, client_out_port: int,
+                 server_name: str, client_id_validator):
         """ Initializes input and output sockets. """
         super(BroadcastUdpServer, self).__init__()
         self.server_name = server_name
+        self.client_id_validator = client_id_validator
         try:
             self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.out_socket.bind((ip, client_in_port))
@@ -39,6 +40,20 @@ class BroadcastUdpServer(threading.Thread):
     def run(self):
         """ Starts a thread that receives and broadcasts data. """
         threading.Thread(target=self.receive_and_broadcast).start()
+
+    def check_client_id(self, client_id: bytes) -> bool:
+        """
+        Checks the client id.
+        :param client_id: the client id to be checked.
+        :returns: True if it's valid, False otherwise.
+        """
+        # here self.clients_addresses_lock is already acquired
+        # there must not be a participant with the same id!
+        if client_id in [client_id in self.clients_addresses.keys()] or \
+                (not self.client_id_validator(client_id)):
+            print(f'Invalid id: {client_id}, ignoring the participant.')
+            return False
+        return True
 
     def receive_and_broadcast(self):
         """
@@ -63,7 +78,9 @@ class BroadcastUdpServer(threading.Thread):
                         # if it's a known client
                         self.broadcast(client_id, data)
                     elif content.startswith(UDP_NEW_CLIENT_MSG):
-                        # if it's a new client
+                        # if it's a new client, check its id
+                        if not self.check_client_id(client_id):
+                            return
                         self.clients_addresses[client_id] = client_address
                         print(f'{self.server_name} participants:',
                               list(self.clients_addresses.values()))
