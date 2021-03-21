@@ -28,7 +28,7 @@ class BasicTcpClient(BasicClient, ABC):
 
         except socket.error as e:
             # prints the full class name and the exception
-            print(type(self), e)
+            print(type(self).__name__, e)
             raise e  # will be handled in the main window
 
     def send_packet(self, data: bytes):
@@ -38,7 +38,7 @@ class BasicTcpClient(BasicClient, ABC):
         except socket.error as e:
             if self.running:
                 # prints the full class name and the exception
-                print(type(self), e)
+                print(type(self).__name__, e)
                 self.network_error.emit(str(e))
 
     def close(self):

@@ -190,9 +190,8 @@ class MainWindow(QtWidgets.QMainWindow):
                                     self.video_grid_container)
         self.video_grid.add_video_widget(self.client_info)
 
-        self.video_grid_container_layout.addWidget(
-            self.video_grid, 1, 1)  # 1, 1 because of the spacers
-        # TODO constant
+        self.video_grid_container_layout.addWidget(self.video_grid,
+                                                   *VIDEO_GRID_POSITION)
 
     def create_chat_window(self):
         """ Creates the chat window. """

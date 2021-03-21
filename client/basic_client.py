@@ -60,7 +60,6 @@ class BasicClient(QThread, metaclass=QABCMeta):
         Runs send_data_loop in a separate thread
         and receive_data_loop in this thread.
         """
-        # TODO check loading issue
         threading.Thread(target=self.catch_exception,
                          args=(self.send_data_loop,)).start()
         self.catch_exception(self.receive_data_loop)

@@ -43,5 +43,10 @@ TOGGLE_REMOTE_WINDOW_DICT = {
     False: ('Remote Window', f'{PATH_TO_IMAGES}\\windows_icon.png')
 }
 
-# default horizontal spacer's size, doesn't need to be changed
+# Default horizontal spacer's size, doesn't need to be changed
 DEFAULT_HSPACER_SIZE = (40, 20)  # width, height
+
+# The video_grid position in the video_grid_container_layout -
+# because there is one spacer on each side of it (left, right, top, bottom)
+# and the video_grid should be in the middle
+VIDEO_GRID_POSITION = (1, 1)  # row, column
