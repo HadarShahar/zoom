@@ -1,7 +1,6 @@
 PyQt5
 numpy
 opencv-python
-uiautomation
 requests
 Flask
 python-dotenv

@@ -22,7 +22,7 @@ So far I have made the following features, all of them work between multiple use
 Run the file [setup/setup.bat](setup/setup.bat) which installs all the requirements and 
 imports the registry constants (the server's ip and ports).
 
-If pyaudio installation fails, check this link https://stackoverflow.com/a/55630212.
+If pyaudio installation fails, check [this link](https://stackoverflow.com/a/55630212).
 
 ## Run
 Use the batch files in the [run directory](run) or run these commands: 
