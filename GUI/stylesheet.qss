@@ -38,7 +38,7 @@ QPushButton#name_sign_in_button:hover {
     background-color: #304d9e;
 }
 QLabel#no_name_error_label {
-    color: red;
+    color: #ed1c24;
 }
 
 
