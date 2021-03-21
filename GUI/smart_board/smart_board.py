@@ -248,7 +248,7 @@ class SmartBoard(QtWidgets.QFrame):
                                (xs[-1], ys[-1])) < SmartBoard.MIN_LINE_LEN:
             return None
 
-        m, b = list(np.polyfit(xs, ys, 1))
+        m, b = list(np.polyfit(xs, ys, 1))  # 1 for linear equation
         for p in zip(xs, ys):
             dist = SmartBoard.distance_point_line(p, m, b)
             if dist > SmartBoard.DISTANCE_THRESHOLD:
