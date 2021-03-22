@@ -123,7 +123,7 @@ class RemoteNotepad(RemoteWindow):
 
     def handle_new_msg(self, msg: RemoteWindowMsg):
         """ Handles new RemoteWindowMsg. """
-        print('handling:', msg)
+        # print('handling:', msg)
         change_text_operations = {
             RemoteWindowMsg.REPLACE_LINE: self.replace_line,
             RemoteWindowMsg.SET_TEXT: self.set_text
@@ -212,7 +212,7 @@ class RemoteNotepad(RemoteWindow):
             # insert empty lines at the last char index
             self.set_selection(last_char_index, last_char_index)
             empty_lines = RemoteNotepad.LINE_SEPARATOR * \
-                          (line_index + 1 - num_of_lines)
+                (line_index + 1 - num_of_lines)
             self.msg_to_edit_control(EM_REPLACESEL, 0, empty_lines)
 
         line_beginning = self.first_char_index(line_index)
@@ -277,7 +277,7 @@ class RemoteNotepad(RemoteWindow):
         if not self.mutex.tryLock():
             print('Could not acquire mutex in get_selection()')
             return 0, 0
-        # TODO check this call
+
         user32.SendMessageW(self.hwnd_edit, EM_GETSEL,
                             ctypes.byref(start_pos), ctypes.byref(end_pos))
         self.mutex.unlock()
