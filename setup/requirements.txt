@@ -1,6 +1,7 @@
 PyQt5
 numpy
 opencv-python
+Pillow
 requests
 Flask
 python-dotenv
