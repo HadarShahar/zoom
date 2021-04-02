@@ -4,6 +4,8 @@
 """
 from typing import Union
 import requests
+import json
+from http import HTTPStatus
 import os
 import hashlib
 import webbrowser
@@ -32,6 +34,7 @@ class AuthClient(QThread):
     recv_client_info_signal = pyqtSignal(ClientInfo)
 
     network_error = pyqtSignal(str)  # details
+    invalid_id_error = pyqtSignal(str)  # details
 
     def __init__(self):
         """ Constructor. """
@@ -41,6 +44,7 @@ class AuthClient(QThread):
 
         self.local_web_server = LocalWebServer(self.handle_auth_code)
         self.state_token = b''
+        self.client_info = None
 
     def run(self):
         """
@@ -75,35 +79,6 @@ class AuthClient(QThread):
         """
         return self.send_auth_request('/auth/name', {'name': name})
 
-    def send_auth_request(self, endpoint: str, payload: dict) -> \
-            Union[ClientInfo, None]:
-        """
-        Sends an auth request to the given endpoint in the server
-        with the given payload.
-        :returns: a ClientInfo object if the authentication was successful,
-                  None otherwise.
-        """
-        try:
-            response = requests.post(self.server_url + endpoint, json=payload)
-            if response.ok:
-                client_info = ClientInfo.from_json(response.json())
-                self.recv_client_info_signal.emit(client_info)
-                return client_info
-            else:
-                self.network_error.emit(f'response status_code:' +
-                                        f'{response.status_code}')
-        except requests.exceptions.ConnectionError as e:
-            self.network_error.emit('The server is down, '
-                                    'please try again later.')
-
-    def generate_state_token(self):
-        """
-        Creates a state token to prevent request forgery.
-        https://developers.google.com/identity/protocols/oauth2/openid-connect#createxsrftoken
-        """
-        random_bytes = os.urandom(AuthClient.STATE_TOKEN_SEED_LEN)
-        self.state_token = hashlib.sha256(random_bytes).hexdigest()
-
     def google_sign_in(self):
         """ Opens the auth url in the browser. """
         self.generate_state_token()
@@ -116,3 +91,65 @@ class AuthClient(QThread):
             client_id={AuthClient.GOOGLE_CLIENT_ID}
             """.replace('\n', '').replace(' ', '')
         webbrowser.open(auth_url)
+
+    def new_meeting(self) -> Union[ClientInfo, None]:
+        """
+        Sends a request to create a new meeting and returns the response.
+        """
+        payload = {'id': self.client_info.id.hex()}
+        return self.send_auth_request('/new-meeting', payload)
+
+    def join_meeting(self, hex_meeting_id: str) -> Union[ClientInfo, None]:
+        """
+        Sends a request to join to a meeting with a given id
+        and returns the response.
+        """
+        payload = {'id': self.client_info.id.hex(),
+                   'meeting_id': hex_meeting_id}
+        return self.send_auth_request('/join-meeting', payload)
+
+    def logout(self):
+        """ Sends a request to log the user out. """
+        payload = {'id': self.client_info.id.hex()}
+        print('logout:', payload)
+        try:
+            requests.post(self.server_url + '/logout', json=payload,
+                          timeout=0.0000000001)  # doesn't need the response...
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.ReadTimeout):
+            pass
+
+    def send_auth_request(self, endpoint: str, payload: dict) -> \
+            Union[ClientInfo, None]:
+        """
+        Sends an auth request to the given endpoint in the server
+        with the given payload,
+         and emits a signal with some data according to the response.
+        :returns: a ClientInfo object if the authentication was successful,
+                  None otherwise.
+        """
+        try:
+            response = requests.post(self.server_url + endpoint, json=payload)
+            if response.ok:
+                client_info = ClientInfo.from_json(response.json())
+                self.client_info = client_info
+                self.recv_client_info_signal.emit(client_info)
+                return client_info
+            elif response.status_code == HTTPStatus.NOT_FOUND:
+                self.invalid_id_error.emit(f'{response.json().get("message")}')
+            else:
+                self.network_error.emit(f'[{response.status_code}]\n' +
+                                        f'{response.json().get("message")}')
+        except requests.exceptions.ConnectionError:
+            self.network_error.emit('The server is down, '
+                                    'please try again later.')
+        except json.decoder.JSONDecodeError:
+            self.network_error.emit('Invalid json response.')
+
+    def generate_state_token(self):
+        """
+        Creates a state token to prevent request forgery.
+        https://developers.google.com/identity/protocols/oauth2/openid-connect#createxsrftoken
+        """
+        random_bytes = os.urandom(AuthClient.STATE_TOKEN_SEED_LEN)
+        self.state_token = hashlib.sha256(random_bytes).hexdigest()

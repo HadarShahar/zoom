@@ -7,6 +7,7 @@ from network.tcp_network_utils import create_packet
 from network.custom_messages.chat_msg import ChatMsg
 from server.broadcast_tcp_server import BroadcastTcpServer
 from server.participant import Participant
+from server.ids_config import MEETING_ID_LEN
 
 
 class ChatServer(BroadcastTcpServer):
@@ -29,5 +30,11 @@ class ChatServer(BroadcastTcpServer):
         if msg.recipient_id == ChatMsg.BROADCAST_ID:
             self.broadcast(par, packet)
         else:
-            if msg.recipient_id in self.participants:
-                self.participants[msg.recipient_id].in_socket.sendall(packet)
+            with self.participants_lock:
+                pars = self.participants[par.meeting_id]
+
+                # remove the meeting id from the beginning of the recipient id
+                recipient_client_id = msg.recipient_id[MEETING_ID_LEN:]
+
+                if recipient_client_id in pars:
+                    pars[recipient_client_id].in_socket.sendall(packet)

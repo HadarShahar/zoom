@@ -18,7 +18,8 @@ from GUI.smart_board.smart_board import SmartBoard
 from GUI.widgets.basic_video_widget import BasicVideoWidget
 from GUI.controls_bar.toggle_widget import ToggleWidget
 from GUI.widgets.remote_window_container import RemoteWindowContainer
-from GUI.window_utils import bring_win_to_front, show_error_window
+from GUI.window_utils import bring_win_to_front, show_error_window, \
+    confirm_quit_dialog
 
 from client.info_client import InfoClient
 from client.video.camera_client import CameraClient
@@ -28,8 +29,10 @@ from client.audio.audio_client import AudioClient
 
 class MainWindow(QtWidgets.QMainWindow):
     """ Definition of the class MainWindow. """
-
     finish_loading = pyqtSignal()
+
+    # this signal is emitted when this window is closed
+    exit_signal = pyqtSignal()
 
     def __init__(self):
         """ Initializes the main window. """
@@ -44,6 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
          :returns: True if the set up was successful, False otherwise.
          """
         self.client_info = client_info
+        self.setWindowTitle(f'Meeting ID:   {client_info.meeting_id.hex()}')
         if not self.init_clients():
             return False
 
@@ -142,7 +146,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.client_info.is_video_on)
         self.main_grid_layout.addWidget(self.controls_bar)
         # self.main_grid_layout.addWidget(self.controls_bar, 1, 0) #row, column
-        self.controls_bar.leave_button.clicked.connect(self.exit)
+        self.controls_bar.leave_button.clicked.connect(self.confirm_exit)
         self.connect_toggles()
 
     def connect_toggles(self):
@@ -315,8 +319,29 @@ class MainWindow(QtWidgets.QMainWindow):
             show_error_window('Network error', details)
             self.exit()
 
+    def closeEvent(self, event: QtGui.QCloseEvent):
+        """ This function is called when this window is closed. """
+        if self.running:
+            if not self.confirm_exit():
+                event.ignore()
+        else:
+            event.accept()
+
+    def confirm_exit(self) -> bool:
+        """
+        Asks the client if it wants to exit and exits if it confirms.
+        :returns: True if it has exited, False otherwise.
+        """
+        confirm_dialog_text = 'Are you sure you want to leave the meeting?'
+        if not confirm_quit_dialog(confirm_dialog_text):
+            return False
+        self.exit()
+        return True
+
     def exit(self):
         """ Closes the clients and the gui. """
+        self.running = False
+        self.exit_signal.emit()
         for client in self.clients:
             client.close()
         self.close()  # close the gui
@@ -334,7 +359,7 @@ def main():
 
     # create the main window
     win = MainWindow()
-    if not win.setup(ClientInfo(b'100', 'TestUser')):
+    if not win.setup(ClientInfo(b'100', b'200', 'TestUser')):
         return
     win.show()
 

@@ -67,6 +67,11 @@ class VideoGrid(QtWidgets.QFrame):
         video_widget.deleteLater()
 
         del self.video_widgets[client_id]
+        
+        # # TODO rearrange grid so new widgets won't override the old widgets!!!
+        # for i in range self.layout.count():
+        #     print(self.layout.itemAt(i))
+
         self.update_widgets_size()
 
     def show_video_frame(self, frame: np.ndarray, client_id: bytes):

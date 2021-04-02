@@ -7,25 +7,8 @@ OpeningWindow QLabel {
     color: white;
 }
 
-QPushButton#google_sign_in_button {
-    background-image: url(GUI/images/google_signin/1x/btn_normal.png);
-    width: 191px;
-    height: 46px;
-    border-radius: 5px;
-}
-QPushButton#google_sign_in_button:hover {
-    background-image: url(GUI/images/google_signin/1x/btn_focus.png);
-}
-QPushButton#google_sign_in_button:pressed {
-    background-image: url(GUI/images/google_signin/1x/btn_pressed.png);
-}
-
-QLineEdit#name_input {
-    height: 30px;
-    /* border: 1px solid black; */
-    border-radius: 5px;
-}
-QPushButton#name_sign_in_button {
+/* Matches all instances of QPushButton that are descendants of OpeningWindow. */
+OpeningWindow QPushButton {
     height: 30px;
     border-radius: 5px;
     border: 1px solid white;
@@ -34,10 +17,38 @@ QPushButton#name_sign_in_button {
     color: white;
     width: 70px;
 }
-QPushButton#name_sign_in_button:hover {
+OpeningWindow QPushButton:hover {
     background-color: #304d9e;
 }
-QLabel#no_name_error_label {
+
+QPushButton#new_meeting_button {
+    width: 191px;
+    height: 46px;
+    font-size: 20px;
+}
+
+/* Matches all instances of QLineEdit that are descendants of OpeningWindow. */
+OpeningWindow QLineEdit {
+    height: 30px;
+    border-radius: 5px;
+}
+
+
+QPushButton#google_sign_in_button {
+    background-image: url(GUI/images/google_signin/1x/btn_normal.png);
+    width: 191px;
+    height: 46px;
+    border-radius: 5px;
+    border: none;
+}
+QPushButton#google_sign_in_button:hover {
+    background-image: url(GUI/images/google_signin/1x/btn_focus.png);
+}
+QPushButton#google_sign_in_button:pressed {
+    background-image: url(GUI/images/google_signin/1x/btn_pressed.png);
+}
+
+QLabel#error_label {
     color: #ed1c24;
 }
 

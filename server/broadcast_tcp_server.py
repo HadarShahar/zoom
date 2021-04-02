@@ -5,9 +5,11 @@
 import socket
 import sys
 import threading
+from typing import Dict
 from network.constants import NUMBER_OF_WAITING_CONNECTIONS, EXIT_SIGN
 from server.participant import Participant
 from network.tcp_network_utils import create_packet, recv_packet
+from server.ids_config import MEETING_ID_LEN
 
 
 class BroadcastTcpServer(threading.Thread):
@@ -39,12 +41,12 @@ class BroadcastTcpServer(threading.Thread):
 
             # participants that are connecting to the meeting
             # {hostaddr: Participant(...)}
-            self.connecting_pars: [str, Participant] = {}
+            self.connecting_pars: [str, Participant] = {}  # TODO remove it
             self.connecting_pars_lock = threading.Lock()
 
-            # connected participants in the meeting
-            # {par_id: Participant(...)}
-            self.participants: [bytes, Participant] = {}
+            # connected participants in the meetings
+            # { meeting_id: {client_id: Participant(...), ...} }
+            self.participants: Dict[bytes, Dict[bytes, Participant]] = {}
             self.participants_lock = threading.Lock()
 
         except socket.error as msg:
@@ -110,16 +112,27 @@ class BroadcastTcpServer(threading.Thread):
         """
         received_id = bytes(recv_packet(par.out_socket))
 
-        # "with" block always executes, even after return!
-        with self.participants_lock:
-            # there must not be a participant with the same id!
-            if received_id in [p.id for p in self.participants.values()] or \
-                    (not self.client_id_validator(received_id)):
-                print(f'Invalid id: {received_id}, ignoring the participant.')
-                return False
+        success = self.client_id_validator(received_id)
+        if success:
+            par.meeting_id = received_id[:MEETING_ID_LEN]
+            par.client_id = received_id[MEETING_ID_LEN:]
 
-        par.id = received_id
-        return True
+            # "with" block always executes, even after return!
+            with self.participants_lock:
+                if par.meeting_id in self.participants:
+                    # there must not be a participant with the same id!
+                    if par.client_id in self.participants[par.meeting_id]:
+                        success = False
+                    else:
+                        self.participants[par.meeting_id][par.client_id] = par
+                else:
+                    self.participants[par.meeting_id] = {par.client_id: par}
+
+        if success:
+            self.print_participants()
+        else:
+            print(f'Invalid id: {received_id}, ignoring the participant.')
+        return success
 
     def handle_participant(self, par: Participant):
         """
@@ -128,10 +141,6 @@ class BroadcastTcpServer(threading.Thread):
         try:
             if not self.update_par_id(par):
                 return
-            with self.participants_lock:
-                self.participants[par.id] = par
-                print(f'{self.server_name} participants:',
-                      list(self.participants.values()))
 
             while True:
                 data = recv_packet(par.out_socket)
@@ -149,30 +158,43 @@ class BroadcastTcpServer(threading.Thread):
         """
         Handles new data that was received from a given participant.
         """
-        id_packet = create_packet(par.id)
+        id_packet = create_packet(par.meeting_id + par.client_id)
         data_packet = create_packet(data)
         self.broadcast(par, (id_packet + data_packet))
 
     def par_disconnected(self, par: Participant):
         """
         Receives a participant who has disconnected,
-        closes its sockets and removes it from the participants list.
+        closes its sockets and removes it from the participants in the meeting.
         """
         # print(f'{par} has disconnected')
+        par.close_sockets()
         with self.participants_lock:
-            par.close_sockets()
-            if par.id in self.participants:
-                del self.participants[par.id]
-            print(f'{self.server_name} participants:',
-                  list(self.participants.values()))
+            pars_in_meeting = self.participants[par.meeting_id]
+            if pars_in_meeting and par.client_id in pars_in_meeting:
+                del pars_in_meeting[par.client_id]
+
+                # if the meeting is now empty, delete the meeting id
+                if not self.participants[par.meeting_id]:
+                    del self.participants[par.meeting_id]
+
+            self.print_participants()
 
     def broadcast(self, sender_par: Participant, packet: bytes):
         """
         Broadcasts a given packet (or chained packets) of data
-        to all the participants, except the one who sends the data.
+        to all the participants in the meeting of the sending participant,
+        except the one who sends the data.
         """
         with self.participants_lock:
-            for par_id, par in self.participants.items():
-                if par != sender_par:
+            pars = self.participants.get(sender_par.meeting_id, {})
+            for par_id, par in pars.items():
+                if par_id != sender_par.client_id:
                     with par.lock:
                         par.in_socket.sendall(packet)
+
+    def print_participants(self):
+        """ Prints the server participants. """
+        print(f'{self.server_name} participants:',
+              {meeting_id.hex(): list(pars.values())
+               for meeting_id, pars in self.participants.items()})

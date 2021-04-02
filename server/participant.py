@@ -9,12 +9,13 @@ class Participant(object):
     """ Definition of the class Participant. """
 
     def __init__(self, address: (str, int), in_socket=None, out_socket=None,
-                 par_id=b''):
+                 meeting_id=b'', client_id=b''):
         """ Constructor. """
         self.address = address
         self.in_socket = in_socket
         self.out_socket = out_socket
-        self.id = par_id  # in bytes
+        self.meeting_id = meeting_id
+        self.client_id = client_id
         self.lock = threading.Lock()
 
         # client_info is only used by the info server
@@ -32,12 +33,14 @@ class Participant(object):
         self.in_socket.close()
         self.out_socket.close()
 
-    def __eq__(self, other) -> bool:
-        """
-        Checks if a given participant has the same address
-        as this participant.
-        """
-        return self.address == other.address
+    # def __eq__(self, other) -> bool:
+    #     """
+    #     Checks if a given participant has the same ids as this participant.
+    #     This function is necessary for removing a Participant object
+    #     from a list of participants using list.remove().
+    #     """
+    #     return self.meeting_id == other.meeting_id and \
+    #         self.client_id == other.client_id
 
     def __repr__(self) -> str:
         """ Returns the participant representation. """
