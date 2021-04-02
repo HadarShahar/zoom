@@ -4,7 +4,7 @@
     The network constants that will be written in the client registry.
 """
 
-SERVER_IP = '192.168.89.232'   # the server ip
+SERVER_IP = '127.0.0.1'   # the server ip
 
 AUTH_SERVER_PORT = 7231
 
