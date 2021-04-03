@@ -16,7 +16,7 @@ from GUI.window_utils import bring_win_to_front, show_error_window
 class OpeningWindow(QtWidgets.QWidget):
     """ Definition of the class OpeningWindow. """
 
-    WINDOW_SIZE = (580, 400)
+    WINDOW_SIZE = (580, 400)  # (width, height)
 
     def __init__(self):
         """ Constructor. """
@@ -76,7 +76,9 @@ class OpeningWindow(QtWidgets.QWidget):
         """
         This is a callback function which is called when the
         auth_client receives the client info from the sever.
-
+        It shows the join_meeting_frame if the client has just signed in,
+        or starts the main window (meeting window)
+        if client has created / joined a meeting.
         """
         print('received_client_info:', client_info)
         bring_win_to_front(self)
@@ -112,7 +114,7 @@ class OpeningWindow(QtWidgets.QWidget):
         Starts a thread that sends a request to join a meeting
         with the id entered in meeting_id_input.
         """
-        meeting_id = self.meeting_id_input.text()
+        meeting_id = self.meeting_id_input.text().replace(' ', '')
         if meeting_id:
             threading.Thread(target=self.auth_client.join_meeting,
                              args=(meeting_id,)).start()
