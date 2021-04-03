@@ -41,7 +41,7 @@ class BroadcastTcpServer(threading.Thread):
 
             # participants that are connecting to the meeting
             # {hostaddr: Participant(...)}
-            self.connecting_pars: [str, Participant] = {}  # TODO remove it
+            self.connecting_pars: [str, Participant] = {}
             self.connecting_pars_lock = threading.Lock()
 
             # connected participants in the meetings

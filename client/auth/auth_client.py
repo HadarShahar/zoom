@@ -138,7 +138,7 @@ class AuthClient(QThread):
             elif response.status_code == HTTPStatus.NOT_FOUND:
                 self.invalid_id_error.emit(f'{response.json().get("message")}')
             else:
-                self.network_error.emit(f'[{response.status_code}]\n' +
+                self.network_error.emit(f'[{response.reason}]\n' +
                                         f'{response.json().get("message")}')
         except requests.exceptions.ConnectionError:
             self.network_error.emit('The server is down, '
