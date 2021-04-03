@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
          :returns: True if the set up was successful, False otherwise.
          """
         self.client_info = client_info
-        self.setWindowTitle(f'Meeting ID:   {client_info.meeting_id.hex()}')
+        self.setWindowTitle(f'Meeting ID:   {self.format_meeting_id()}')
         if not self.init_clients():
             return False
 
@@ -69,6 +69,16 @@ class MainWindow(QtWidgets.QMainWindow):
         print('finish_loading')
         self.finish_loading.emit()
         return True
+
+    def format_meeting_id(self, letters_group_size=3, separator=' ') -> str:
+        """
+        :param letters_group_size: how many letters to group together.
+        :param separator: the separator between the letters groups.
+        :returns: the formatted string.
+        """
+        st = self.client_info.meeting_id.hex()
+        n = letters_group_size
+        return separator.join([st[i: i + n] for i in range(0, len(st), n)])
 
     def init_clients(self) -> bool:
         """
