@@ -5,7 +5,7 @@
 import socket
 import sys
 import threading
-from typing import Dict
+from typing import Dict, Callable
 from network.constants import NUMBER_OF_WAITING_CONNECTIONS, EXIT_SIGN
 from server.participant import Participant
 from network.tcp_network_utils import create_packet, recv_packet
@@ -16,7 +16,8 @@ class BroadcastTcpServer(threading.Thread):
     """ Definition of the class BroadcastTcpServer. """
 
     def __init__(self, ip: str, client_in_port: int, client_out_port: int,
-                 server_name: str, client_id_validator):
+                 server_name: str,
+                 client_id_validator: Callable[[bytes], bool]):
         """
         Initializes input and output sockets for the BroadcastServer.
         """

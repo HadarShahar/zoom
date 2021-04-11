@@ -3,6 +3,7 @@
     The info server code.
 """
 import pickle
+from typing import Callable
 from network.tcp_network_utils import create_packet, send_packet, recv_packet
 from network.custom_messages.general_info import Info
 from server.broadcast_tcp_server import BroadcastTcpServer
@@ -13,7 +14,8 @@ class InfoServer(BroadcastTcpServer):
     """ Definition of the class InfoServer. """
 
     def __init__(self, ip: str, client_in_port: int, client_out_port: int,
-                 client_disconnected_callback, client_id_validator):
+                 client_disconnected_callback: Callable[[bytes], None],
+                 client_id_validator: Callable[[bytes], bool]):
         """ Constructor. """
         super(InfoServer, self).__init__(ip, client_in_port, client_out_port,
                                          'info', client_id_validator)

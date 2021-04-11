@@ -3,6 +3,7 @@
     The chat server code.
 """
 import pickle
+from typing import Callable
 from network.tcp_network_utils import create_packet
 from network.custom_messages.chat_msg import ChatMsg
 from server.broadcast_tcp_server import BroadcastTcpServer
@@ -14,7 +15,7 @@ class ChatServer(BroadcastTcpServer):
     """ Definition of the class ChatServer. """
 
     def __init__(self, ip: str, client_in_port: int, client_out_port: int,
-                 client_id_validator):
+                 client_id_validator: Callable[[bytes], bool]):
         """ Constructor. """
         super(ChatServer, self).__init__(ip, client_in_port, client_out_port,
                                          'chat', client_id_validator)

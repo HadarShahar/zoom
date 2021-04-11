@@ -6,7 +6,7 @@ import socket
 import sys
 import threading
 import struct
-from typing import Dict
+from typing import Dict, Callable
 from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
     UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG
 from server.ids_config import MEETING_ID_LEN, CLIENT_ID_LEN
@@ -16,7 +16,8 @@ class BroadcastUdpServer(threading.Thread):
     """ Definition of the class BroadcastUdpServer. """
 
     def __init__(self, ip: str, client_in_port: int, client_out_port: int,
-                 server_name: str, client_id_validator):
+                 server_name: str,
+                 client_id_validator: Callable[[bytes], bool]):
         """ Initializes input and output sockets. """
         super(BroadcastUdpServer, self).__init__()
         self.server_name = server_name
