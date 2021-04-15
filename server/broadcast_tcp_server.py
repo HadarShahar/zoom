@@ -171,7 +171,7 @@ class BroadcastTcpServer(threading.Thread):
         # print(f'{par} has disconnected')
         par.close_sockets()
         with self.participants_lock:
-            pars_in_meeting = self.participants[par.meeting_id]
+            pars_in_meeting = self.participants.get(par.meeting_id)
             if pars_in_meeting and par.client_id in pars_in_meeting:
                 del pars_in_meeting[par.client_id]
 
