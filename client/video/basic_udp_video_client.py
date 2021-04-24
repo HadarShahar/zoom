@@ -76,6 +76,9 @@ class BasicUdpVideoClient(BasicUdpClient):
                 clients_handlers[sender_id] = UdpPacketsHandler()
 
             p = UdpPacket.decode(data)
+            if p is None:  # invalid packet
+                continue
+
             buffer = clients_handlers[sender_id].process_packet(p)
             if buffer is not None:
                 frame = VideoEncoder.decode_frame_buffer(buffer)

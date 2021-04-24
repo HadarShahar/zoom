@@ -3,6 +3,7 @@
     UdpPacketsHandler.
 """
 import math
+from typing import Union
 from client.video.udp_packet import UdpPacket
 
 
@@ -17,7 +18,7 @@ class UdpPacketsHandler:
         self.packets_data = []
         self.remaining_packets = None
 
-    def process_packet(self, p: UdpPacket):
+    def process_packet(self, p: UdpPacket) -> Union[bytes, None]:
         """
         Processes a given packet.
         If all the packets were collected, returns the full frame.
@@ -44,6 +45,9 @@ class UdpPacketsHandler:
             return None
 
         # place the packet at the right place
+        if p.packet_index >= len(self.packets_data):
+            print('malformed packet.')
+            return None
         self.packets_data[p.packet_index] = p.data
         self.remaining_packets -= 1
 

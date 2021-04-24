@@ -38,16 +38,22 @@ class UdpPacket:
     @staticmethod
     def decode(packet: bytes):
         """
-        Decodes a given packet and returns a UdpPacket.
+        Decodes a given packet and returns a UdpPacket
+        or None if it's invalid packet.
         """
-        raw_header = packet[:UdpPacket.HEADER_SIZE]
-        frame_index, packet_index, num_packets, data_size = \
-            struct.unpack(UdpPacket.BYTES_FORMAT, raw_header)
+        try:
+            raw_header = packet[:UdpPacket.HEADER_SIZE]
+            frame_index, packet_index, num_packets, data_size = \
+                struct.unpack(UdpPacket.BYTES_FORMAT, raw_header)
 
-        data = packet[UdpPacket.HEADER_SIZE: UdpPacket.HEADER_SIZE + data_size]
-        p = UdpPacket(frame_index, packet_index, num_packets, data)
-        return p
+            data = packet[UdpPacket.HEADER_SIZE:
+                          UdpPacket.HEADER_SIZE + data_size]
+            p = UdpPacket(frame_index, packet_index, num_packets, data)
+            return p
+        except Exception as e:
+            print('Invalid UdpPacket:', e)
+            return None
 
-    def encode(self):
+    def encode(self) -> bytes:
         """ Encodes the packet. """
         return self.header + self.data

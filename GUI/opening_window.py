@@ -13,10 +13,23 @@ from GUI.gui_constants import OPENING_WINDOW_UI_FILE_PATH, LOADING_GIF_PATH
 from GUI.window_utils import bring_win_to_front, show_error_window
 
 
+def except_hook(cls, exception, traceback):
+    """
+    Global exception handler.
+    Without it, PyQt5 immediately aborts when encountering
+    an unhandled exception, without traceback.
+    """
+    sys.__excepthook__(cls, exception, traceback)
+
+
+# When an exception is raised and uncaught,the interpreter calls sys.excepthook
+sys.excepthook = except_hook
+
+
 class OpeningWindow(QtWidgets.QWidget):
     """ Definition of the class OpeningWindow. """
 
-    WINDOW_SIZE = (580, 400)  # (width, height)
+    WINDOW_SIZE = (580, 420)  # (width, height)
 
     def __init__(self):
         """ Constructor. """
