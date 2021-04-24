@@ -40,22 +40,22 @@ class AudioStream(object):
         """ Writes data to the stream. """
         self.stream.write(data)
 
-    def __del__(self):
-        """
-        This method is a destructor method,
-        which is called as soon as all references
-        of the object are deleted - when it's garbage collected.
-        It stops the stream and closes it.
-        """
+    # def __del__(self):
+    #     """
+    #     This method is a destructor method,
+    #     which is called as soon as all references
+    #     of the object are deleted - when it's garbage collected.
+    #     It stops the stream and closes it.
+    #     """
+    def close(self):
+        """ Closes the stream. """
         try:
-            # # if the stream object was created successfully
-            # # in the constructor, close it.
-            # if hasattr(self, 'stream'):
             self.stream.stop_stream()
+        except OSError:
+            pass  # The stream is not open
+        finally:
             self.stream.close()
             self.p.terminate()
-        except Exception as e:
-            print('__del__:', e)
 
     @staticmethod
     def is_silent(data: bytes) -> bool:

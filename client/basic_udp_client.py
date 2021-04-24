@@ -5,6 +5,7 @@
 import socket
 import struct
 from abc import ABC
+from typing import Union, Tuple
 from client.basic_client import BasicClient
 from network.constants import NETWORK_BYTES_FORMAT, NETWORK_BYTES_PER_NUM, \
     UDP_SOCKET_BUFFER_SIZE, UDP_NEW_CLIENT_MSG
@@ -42,11 +43,12 @@ class BasicUdpClient(BasicClient, ABC):
         """ Packs and sends data to the server. """
         self.out_socket.sendto(self.pack_data(data), self.server_in_address)
 
-    def receive_data(self):
+    def receive_data(self) -> Union[Tuple[bytes, bytes], Tuple[None, None]]:
         """
         Receives data from the server.
         Returns the sender client id and the data that was received
-        if it was received from the right server. Otherwise returns None.
+        if it was received from the right server.
+        Otherwise returns (None, None).
         """
         data, address = self.in_socket.recvfrom(UDP_SOCKET_BUFFER_SIZE)
         if address != self.server_out_address:

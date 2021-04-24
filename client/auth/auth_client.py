@@ -29,6 +29,10 @@ class AuthClient(QThread):
     # the number of random bytes the state token will be generated from
     STATE_TOKEN_SEED_LEN = 1024
 
+    # timeout for the logout request, so the request won't slow down the exit
+    # small number because it doesn't need the response
+    LOGOUT_REQUEST_TIMEOUT = 0.1  
+    
     # this signal is emitted when the client_info is received
     # from the server (after the client signs in)
     recv_client_info_signal = pyqtSignal(ClientInfo)
@@ -109,12 +113,18 @@ class AuthClient(QThread):
         return self.send_auth_request('/join-meeting', payload)
 
     def logout(self):
-        """ Sends a request to log the user out. """
+        """
+        Sends a request to log the user out
+        if it's logged in.
+        """
+        if self.client_info is None:
+            # the user is not logged in
+            return
         payload = {'id': self.client_info.id.hex()}
         print('logout:', payload)
         try:
             requests.post(self.server_url + '/logout', json=payload,
-                          timeout=0.0000000001)  # doesn't need the response...
+                          timeout=AuthClient.LOGOUT_REQUEST_TIMEOUT)  
         except (requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout):
             pass

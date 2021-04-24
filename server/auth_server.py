@@ -21,6 +21,8 @@ class AuthServer(threading.Thread):
     GOOGLE_USER_INFO_ENDPOINT = \
         'https://www.googleapis.com/oauth2/v3/userinfo?access_token={}'
 
+    MAX_CLIENTS_PER_MEETING = 4
+
     # colors for missing credentials error
     COLORS_FAIL = '\033[91m'
     COLORS_ENDC = '\033[0m'
@@ -193,6 +195,10 @@ class AuthServer(threading.Thread):
             if meeting_id not in self.meetings_dict:
                 return self.error_response('Invalid meeting ID.',
                                            HTTPStatus.NOT_FOUND)
+            if len(self.meetings_dict[meeting_id]) == \
+                    AuthServer.MAX_CLIENTS_PER_MEETING:
+                return self.error_response('This meeting is full.',
+                                           HTTPStatus.FORBIDDEN)
             self.meetings_dict[meeting_id].append(client_info.id)
 
         client_info.meeting_id = meeting_id

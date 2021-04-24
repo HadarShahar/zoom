@@ -4,6 +4,7 @@
 """
 import cv2
 import threading
+import time
 
 
 class VideoCamera(object):
@@ -19,9 +20,14 @@ class VideoCamera(object):
     # 1 to flip the image around the y-axis (0 to flip around the x-axis)
     FLIP_AXIS = 1
 
+    # how many seconds to wait before trying to reconnect to the camera
+    # if it's already in use.
+    DELAY_BEFORE_TRYING_TO_RECONNECT = 2
+
     def __init__(self):
         """ Constructor. """
         self.cap = None
+        self.is_open = True
 
         # try to connect to the camera in a separate thread
         # because it might take some time
@@ -39,8 +45,17 @@ class VideoCamera(object):
         and sets the frame size.
         """
         print('trying to connect to camera')
+        if self.cap:
+            self.cap.release()
+
         # capture from device 0
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(0)  # blocking call
+
+        # if the close() method was called while trying to initialize 
+        # cv2.VideoCapture (in another thread), release the VideoCapture object
+        if not self.is_open:
+            self.cap.release()
+            return
 
         if self.cap.isOpened():
             print('Connected to camera')
@@ -70,16 +85,22 @@ class VideoCamera(object):
             else:
                 print('The frame was not read correctly, '
                       'maybe the camera is already in use.')
+
+        time.sleep(VideoCamera.DELAY_BEFORE_TRYING_TO_RECONNECT)
         self.connect_to_camera()
 
-    def __del__(self):
-        """
-        This method is a destructor method,
-        which is called as soon as all references
-        of the object are deleted - when it's garbage collected.
-        It releases the capture and destroys all cv2 open windows.
-        """
-        self.cap.release()
+    # def __del__(self):
+    #     """
+    #     This method is a destructor method,
+    #     which is called as soon as all references
+    #     of the object are deleted - when it's garbage collected.
+    #     It releases the capture and destroys all cv2 open windows.
+    #     """
+    def close(self):
+        """ Closes the video capture. """
+        self.is_open = False
+        if self.cap:
+            self.cap.release()
         cv2.destroyAllWindows()
 
 

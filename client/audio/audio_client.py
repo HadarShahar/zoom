@@ -15,7 +15,8 @@ class AudioClient(BasicUdpClient):
         super(AudioClient, self).__init__(
             Constants.SERVER_IP, Constants.CLIENT_IN_AUDIO_PORT,
             Constants.CLIENT_OUT_AUDIO_PORT, client_id)
-        self.stream = AudioStream(input=True, output=True)
+        self.in_stream = AudioStream(input=True, output=False)
+        self.out_stream = AudioStream(input=False, output=True)
 
     def send_data_loop(self):
         """
@@ -23,8 +24,8 @@ class AudioClient(BasicUdpClient):
         and sends each chunk to the server.
         """
         while self.running and self.is_sharing:
-            chunk = self.stream.read_chunk()
-            if not self.stream.is_silent(chunk):
+            chunk = self.in_stream.read_chunk()
+            if not self.in_stream.is_silent(chunk):
                 self.send_data(chunk)
 
     def receive_data_loop(self):
@@ -35,4 +36,19 @@ class AudioClient(BasicUdpClient):
         while self.running:
             sender_id, data = self.receive_data()
             if data is not None:
-                self.stream.write(data)
+                try:
+                    self.out_stream.write(data)
+                except OSError as e:
+                    # [Errno -9999] Unanticipated host error
+                    # occurs if 2 clients are running on the same computer
+                    # recreating the stream fixes it
+                    print('AudioClient.receive_data_loop:', e)
+                    self.out_stream.close()
+                    print('Recreating the stream...')
+                    self.out_stream = AudioStream(input=False, output=True)
+
+    def close(self):
+        """ Closes the streams. """
+        super(AudioClient, self).close()
+        self.in_stream.close()
+        self.out_stream.close()

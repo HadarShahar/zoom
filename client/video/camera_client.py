@@ -23,3 +23,8 @@ class CameraClient(BasicUdpVideoClient):
         None (if it wasn't read successfully).
         """
         return self.camera.get_frame()
+
+    def close(self):
+        """ Closes th camera. """
+        super(CameraClient, self).close()
+        self.camera.close()
