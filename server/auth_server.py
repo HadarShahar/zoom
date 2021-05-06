@@ -26,6 +26,9 @@ class AuthServer(threading.Thread):
     # colors for missing credentials error
     COLORS_FAIL = '\033[91m'
     COLORS_ENDC = '\033[0m'
+    MISSING_OAUTH_CRED_ERROR = 'Missing server OAuth 2.0 credentials: ' \
+                               'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.\n' \
+                               'Cannot authenticate the user using google API.'
 
     def __init__(self, port: int):
         """ Constructor. """
@@ -37,6 +40,11 @@ class AuthServer(threading.Thread):
         self.google_client_id = os.environ.get('GOOGLE_CLIENT_ID', None)
         self.google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET',
                                                    None)
+        if not self.google_client_id or not self.google_client_secret:
+            print(AuthServer.COLORS_FAIL +
+                  AuthServer.MISSING_OAUTH_CRED_ERROR +
+                  AuthServer.COLORS_ENDC)
+
         self.create_endpoints()
 
         # { client_id: ClientInfo(...) }
@@ -49,15 +57,8 @@ class AuthServer(threading.Thread):
 
     def create_endpoints(self):
         """ Creates endpoints for the server. """
-        if self.google_client_id and self.google_client_secret:
-            self.app.add_url_rule('/auth/google', 'google_auth',
-                                  self.google_auth, methods=['POST'])
-        else:
-            print(AuthServer.COLORS_FAIL +
-                  'Missing OAuth 2.0 credentials: ' +
-                  'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.\n' +
-                  'Cannot authenticate the user using google API.' +
-                  AuthServer.COLORS_ENDC)
+        self.app.add_url_rule('/auth/google', 'google_auth',
+                              self.google_auth, methods=['POST'])
         self.app.add_url_rule('/auth/name', 'name_auth',
                               self.name_auth, methods=['POST'])
 
@@ -82,6 +83,10 @@ class AuthServer(threading.Thread):
          calls google api to get the user info,
          and sends it the client.
          """
+        if not self.google_client_id or not self.google_client_secret:
+            return self.error_response(AuthServer.MISSING_OAUTH_CRED_ERROR,
+                                       HTTPStatus.INTERNAL_SERVER_ERROR)
+
         try:
             content = request.get_json()
             redirect_uri = content.get('redirect_uri')
@@ -92,21 +97,23 @@ class AuthServer(threading.Thread):
                     'Missing required params: "redirect_uri", "auth_code".')
 
             access_token = self.get_access_token(redirect_uri, auth_code)
-            if access_token:
-                user_info = self.get_user_info(access_token)
+            if not access_token:
+                return self.error_response('Invalid request.')
+            user_info = self.get_user_info(access_token)
 
-                client_id = self.generate_client_id()
-                # no meeting id because the client still hasn't join a meeting
-                meeting_id = b''
-                # google returns the img url in the picture attribute
-                img_url = user_info['picture']
+            client_id = self.generate_client_id()
+            # no meeting id because the client still hasn't join a meeting
+            meeting_id = b''
+            # google returns the img url in the picture attribute
+            img_url = user_info['picture']
 
-                client_info = ClientInfo(client_id, meeting_id,
-                                         user_info['name'], img_url)
+            client_info = ClientInfo(client_id, meeting_id,
+                                     user_info['name'], img_url)
 
+            with self.authenticated_clients_lock:
                 self.authenticated_clients[client_id] = client_info
-                self.print_clients()
-                return make_response(client_info.json())
+            self.print_clients()
+            return make_response(client_info.json())
 
         except Exception as e:
             print('AuthServer.google_auth:', e)
@@ -129,7 +136,8 @@ class AuthServer(threading.Thread):
         img_url = ''  # no image url
         client_info = ClientInfo(client_id, meeting_id, name, img_url)
 
-        self.authenticated_clients[client_id] = client_info
+        with self.authenticated_clients_lock:
+            self.authenticated_clients[client_id] = client_info
         self.print_clients()
         return make_response(client_info.json())
 
@@ -257,7 +265,7 @@ class AuthServer(threading.Thread):
             with self.authenticated_clients_lock:
                 if client_id in self.authenticated_clients:
                     del self.authenticated_clients[client_id]
-                    self.print_clients()
+            self.print_clients()
         return {}
 
     def generate_meeting_id(self) -> bytes:
@@ -316,9 +324,10 @@ class AuthServer(threading.Thread):
 
     def print_clients(self):
         """ Prints the server clients. """
-        print('authenticated clients:',
-              [client_id.hex()
-               for client_id in self.authenticated_clients.keys()])
+        with self.authenticated_clients_lock:
+            print('authenticated clients:',
+                  [client_id.hex()
+                   for client_id in self.authenticated_clients.keys()])
 
     @staticmethod
     def get_user_info(access_token: str) -> dict:

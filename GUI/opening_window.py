@@ -29,7 +29,7 @@ sys.excepthook = except_hook
 class OpeningWindow(QtWidgets.QWidget):
     """ Definition of the class OpeningWindow. """
 
-    WINDOW_SIZE = (580, 420)  # (width, height)
+    WINDOW_HEIGHT = 420
 
     def __init__(self):
         """ Constructor. """
@@ -39,7 +39,7 @@ class OpeningWindow(QtWidgets.QWidget):
         self.error_label.hide()
         self.join_meeting_frame.hide()
         self.loading_frame.hide()
-        self.setFixedSize(*OpeningWindow.WINDOW_SIZE)
+        self.setFixedHeight(OpeningWindow.WINDOW_HEIGHT)
 
         self.auth_client = AuthClient()
         self.auth_client.start()
