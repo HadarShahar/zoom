@@ -27,6 +27,7 @@ class VideoCamera(object):
     def __init__(self):
         """ Constructor. """
         self.cap = None
+        self.cap_lock = threading.Lock()
         self.is_open = True
 
         # try to connect to the camera in a separate thread
@@ -35,34 +36,31 @@ class VideoCamera(object):
         thread.daemon = True  # so it won't prevent the app from exiting
         thread.start()
 
-        # self.connect_to_camera()
-        # if not self.cap.isOpened():
-        #     print('No camera detected')
-
-    def connect_to_camera(self):
+    def connect_to_camera(self) -> bool:
         """
         Initializes the VideoCapture object
         and sets the frame size.
+        :returns: True if it has connected to camera, False otherwise.
         """
-        print('trying to connect to camera')
-        if self.cap:
-            self.cap.release()
+        with self.cap_lock:
+            if not self.is_open:
+                return False
 
-        # capture from device 0
-        self.cap = cv2.VideoCapture(0)  # blocking call
+            if self.cap:
+                self.cap.release()
 
-        # if the close() method was called while trying to initialize 
-        # cv2.VideoCapture (in another thread), release the VideoCapture object
-        if not self.is_open:
-            self.cap.release()
-            return
+            print('trying to connect to camera')
+            # capture from device 0
+            self.cap = cv2.VideoCapture(0)  # blocking call
 
-        if self.cap.isOpened():
+            if not self.cap.isOpened():
+                return False
+
             print('Connected to camera')
-
             # change the VideoCapture frame size
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, VideoCamera.VIDEO_WIDTH)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VideoCamera.VIDEO_HEIGHT)
+        return True
 
     def get_frame(self, show=False):
         """
@@ -70,37 +68,40 @@ class VideoCamera(object):
         Returns a numpy array (np.ndarray) if the frame was read successfully,
         otherwise None.
         """
-        if self.cap is None:
-            return None
+        with self.cap_lock:
+            if self.cap is None or self.is_open is False:
+                return None
 
-        if self.cap.isOpened():
-            retval, frame = self.cap.read()
-            # if a frame was read successfully
-            if retval:
-                frame = cv2.flip(frame, VideoCamera.FLIP_AXIS)
-                if show:
-                    cv2.imshow('my frame', frame)
-                    cv2.waitKey(1)
-                return frame
-            else:
-                print('The frame was not read correctly, '
-                      'maybe the camera is already in use.')
+            if self.cap.isOpened():
+                retval, frame = self.cap.read()
+                # if a frame was read successfully
+                if retval:
+                    frame = cv2.flip(frame, VideoCamera.FLIP_AXIS)
+                    if show:
+                        cv2.imshow('my frame', frame)
+                        cv2.waitKey(1)
+                    return frame
+                else:
+                    print('The frame was not read correctly, '
+                          'maybe the camera is already in use.')
 
         time.sleep(VideoCamera.DELAY_BEFORE_TRYING_TO_RECONNECT)
         self.connect_to_camera()
 
-    # def __del__(self):
-    #     """
-    #     This method is a destructor method,
-    #     which is called as soon as all references
-    #     of the object are deleted - when it's garbage collected.
-    #     It releases the capture and destroys all cv2 open windows.
-    #     """
+    def release_cap(self):
+        """ Releases the video capture (called in a new thread). """
+        with self.cap_lock:
+            if self.cap:
+                self.cap.release()
+                print('The video capture was released.')
+
     def close(self):
         """ Closes the video capture. """
         self.is_open = False
-        if self.cap:
-            self.cap.release()
+        # if self.cap and self.cap_lock.acquire(blocking=False):
+        #     self.cap.release()
+        #     self.cap_lock.release()
+        threading.Thread(target=self.release_cap, daemon=True).start()
         cv2.destroyAllWindows()
 
 

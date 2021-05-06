@@ -100,6 +100,8 @@ class AuthClient(QThread):
         """
         Sends a request to create a new meeting and returns the response.
         """
+        if self.client_info is None:  # The client is not logged in.
+            return None
         payload = {'id': self.client_info.id.hex()}
         return self.send_auth_request('/new-meeting', payload)
 
@@ -108,6 +110,8 @@ class AuthClient(QThread):
         Sends a request to join to a meeting with a given id
         and returns the response.
         """
+        if self.client_info is None:  # The client is not logged in.
+            return None
         payload = {'id': self.client_info.id.hex(),
                    'meeting_id': hex_meeting_id}
         return self.send_auth_request('/join-meeting', payload)
@@ -117,9 +121,8 @@ class AuthClient(QThread):
         Sends a request to log the user out
         if it's logged in.
         """
-        if self.client_info is None:
-            # the user is not logged in
-            return
+        if self.client_info is None:  # The client is not logged in.
+            return None
         payload = {'id': self.client_info.id.hex()}
         print('logout:', payload)
         try:
@@ -142,6 +145,15 @@ class AuthClient(QThread):
             response = requests.post(self.server_url + endpoint, json=payload)
             if response.ok:
                 client_info = ClientInfo.from_json(response.json())
+
+                # If the client is logged in and
+                # it's a response to a new login request, ignore it.
+                # It happens if while waiting for the answer from google,
+                # the client logs in with his name.
+                if self.client_info and not client_info.meeting_id:
+                    print('The client is already logged in.')
+                    return None
+
                 self.client_info = client_info
                 self.recv_client_info_signal.emit(client_info)
                 return client_info
@@ -153,6 +165,7 @@ class AuthClient(QThread):
         except requests.exceptions.ConnectionError:
             self.network_error.emit('The server is down, '
                                     'please try again later.')
+            self.client_info = None  # The client isn't logged in anymore.
         except json.decoder.JSONDecodeError:
             self.network_error.emit('Invalid json response.')
 

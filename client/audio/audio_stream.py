@@ -5,6 +5,7 @@
 import pyaudio
 import wave
 from array import array
+import threading
 
 
 class AudioStream(object):
@@ -31,31 +32,33 @@ class AudioStream(object):
                                   output=output,
                                   frames_per_buffer=AudioStream.CHUNK)
         print('Connected to audio')
+        self.lock = threading.Lock()
 
     def read_chunk(self) -> bytes:
         """ Reads a chunk from the stream. """
-        return self.stream.read(AudioStream.CHUNK)
+        with self.lock:
+            return self.stream.read(AudioStream.CHUNK)
 
     def write(self, data: bytes):
         """ Writes data to the stream. """
-        self.stream.write(data)
+        with self.lock:
+            self.stream.write(data)
 
-    # def __del__(self):
-    #     """
-    #     This method is a destructor method,
-    #     which is called as soon as all references
-    #     of the object are deleted - when it's garbage collected.
-    #     It stops the stream and closes it.
-    #     """
+    def close_stream(self):
+        """ Closes the stream (called in a new thread). """
+        with self.lock:
+            try:
+                self.stream.stop_stream()
+            except OSError:
+                pass  # The stream is not open
+            finally:
+                self.stream.close()
+                self.p.terminate()
+                print('The stream was closed.')
+
     def close(self):
         """ Closes the stream. """
-        try:
-            self.stream.stop_stream()
-        except OSError:
-            pass  # The stream is not open
-        finally:
-            self.stream.close()
-            self.p.terminate()
+        threading.Thread(target=self.close_stream).start()
 
     @staticmethod
     def is_silent(data: bytes) -> bool:
