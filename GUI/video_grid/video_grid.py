@@ -33,7 +33,7 @@ class VideoGrid(QtWidgets.QFrame):
         # {client_id: ClientVideoWidget(...)}
         self.video_widgets: [bytes, ClientVideoWidget] = {}
 
-        # the video widgets, ordered by the time they were added to teh grid
+        # the video widgets, ordered by the time they were added to the grid
         self.ordered_video_widgets: [ClientVideoWidget] = []
 
     def get_video_widget(self, client_id: bytes) -> ClientVideoWidget:

@@ -294,7 +294,6 @@ class MainWindow(QtWidgets.QMainWindow):
         :param ui_widget: The widget in the ui.
         :param start_msg: The info message to send when start sharing.
         :param stop_msg:  The info message to send when stop sharing.
-        :param stop_msg:  The info message to send when stop sharing.
         :return: True if the toggle widget was toggled, False otherwise
         """
         if toggle_widget.is_on or self.can_start_sharing():
