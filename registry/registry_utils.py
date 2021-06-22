@@ -90,7 +90,7 @@ def set_reg_values(input_file):
         set_reg(name, value)
 
 
-def generate_reg_file(input_file, output_file='reg_constants.reg'):
+def generate_reg_file(input_file, output_file='registry\\reg_constants.reg'):
     """
     Generates a .reg file ready to be double clicked
     to save all the values in the registry at HKEY_LOCAL_MACHINE\\{REG_PATH}.

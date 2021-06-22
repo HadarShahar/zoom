@@ -51,7 +51,7 @@ class RemoteNotepad(RemoteWindow):
         super(RemoteNotepad, self).create_window()
         self.hwnd_edit = win32gui.FindWindowEx(
             self.hwnd, None, RemoteNotepad.EDIT_CLASS_NAME, None)
-        print('hwnd_edit:', self.hwnd_edit)
+        # print('hwnd_edit:', self.hwnd_edit)
 
     def run(self):
         """
@@ -107,7 +107,7 @@ class RemoteNotepad(RemoteWindow):
         diff = abs(len(current_text) - self.last_state.text_len)
         if diff <= RemoteNotepad.LEN_DIFF_THRESHOLD:
             return False
-        print('check_text_len_diff:', diff)
+        # print('check_text_len_diff:', diff)
         self.send_all_text(current_text)
         self.last_state.text_len = len(current_text)
         return True
@@ -118,7 +118,7 @@ class RemoteNotepad(RemoteWindow):
             current_text = self.get_text()
         msg = RemoteWindowMsg(RemoteWindowMsg.SET_TEXT,
                               (current_text,))
-        print('send_all_text:', repr(current_text))
+        # print('send_all_text:', repr(current_text))
         self.new_msg.emit(msg)
 
     def handle_new_msg(self, msg: RemoteWindowMsg):

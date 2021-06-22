@@ -80,7 +80,7 @@ class BasicTcpVideoClient(BasicTcpClient):
                 frame = VideoEncoder.decode_frame_buffer(
                     clients_buffers[sender_id])
 
-                if frame is not None:  # TODO check why frame can be None
+                if frame is not None:
                     # cv2.imshow(f'frame from client {sender_id}', frame)
                     # cv2.waitKey(1)
                     self.frame_received.emit(frame, sender_id)

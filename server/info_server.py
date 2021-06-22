@@ -38,7 +38,6 @@ class InfoServer(BroadcastTcpServer):
         """
         if not super(InfoServer, self).update_par_id(par):
             return False
-        # TODO maybe get that from the auth server, but NOTE: here client_info.id also contains the meeting id
         par.client_info = pickle.loads(recv_packet(par.out_socket))
         self.sync_info(par)
         return True
