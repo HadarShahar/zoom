@@ -38,7 +38,7 @@ class AuthClient(QThread):
     recv_client_info_signal = pyqtSignal(ClientInfo)
 
     network_error = pyqtSignal(str)  # details
-    invalid_id_error = pyqtSignal(str)  # details
+    join_meeting_error = pyqtSignal(str)  # details
 
     def __init__(self):
         """ Constructor. """
@@ -158,12 +158,16 @@ class AuthClient(QThread):
                 self.recv_client_info_signal.emit(client_info)
                 return client_info
             elif response.status_code == HTTPStatus.NOT_FOUND:
-                self.invalid_id_error.emit(f'{response.json().get("message")}')
+                self.join_meeting_error.emit(
+                    f'{response.json().get("message")}')
             else:
+                if response.status_code == HTTPStatus.UNAUTHORIZED:
+                    # The client isn't logged in anymore.
+                    self.client_info = None
                 self.network_error.emit(f'[{response.reason}]\n' +
                                         f'{response.json().get("message")}')
         except requests.exceptions.ConnectionError:
-            self.network_error.emit('The server is down, '
+            self.network_error.emit('The server is not available, '
                                     'please try again later.')
             self.client_info = None  # The client isn't logged in anymore.
         except json.decoder.JSONDecodeError:

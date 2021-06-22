@@ -32,7 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
     finish_loading = pyqtSignal()
 
     # this signal is emitted when this window is closed
-    exit_signal = pyqtSignal()
+    exit_signal = pyqtSignal(bool)  # success
 
     def __init__(self):
         """ Initializes the main window. """
@@ -326,7 +326,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.isVisible():
                 bring_win_to_front(self)
             show_error_window('Network error', details)
-            self.exit()
+            self.exit(success=False)
 
     def closeEvent(self, event: QtGui.QCloseEvent):
         """ This function is called when this window is closed. """
@@ -347,10 +347,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.exit()
         return True
 
-    def exit(self):
+    def exit(self, success=True):
         """ Closes the clients and the gui. """
         self.running = False
-        self.exit_signal.emit()
+        self.exit_signal.emit(success)
         for client in self.clients:
             client.close()
         self.close()  # close the gui

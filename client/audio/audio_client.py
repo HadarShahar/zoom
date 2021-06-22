@@ -24,8 +24,17 @@ class AudioClient(BasicUdpClient):
         and sends each chunk to the server.
         """
         while self.running and self.is_sharing:
-            chunk = self.in_stream.read_chunk()
-            if not self.in_stream.is_silent(chunk):
+            try:
+                chunk = self.in_stream.read_chunk()
+            except OSError as e:
+                # [Errno -9999] Unanticipated host error
+                # might happen if someone disconnects the connected headphones
+                print('AudioClient.send_data_loop:', e)
+                self.in_stream.close()
+                print('Recreating the input stream...')
+                self.in_stream = AudioStream(input=True, output=False)
+                continue
+            if not AudioStream.is_silent(chunk):
                 self.send_data(chunk)
 
     def receive_data_loop(self):

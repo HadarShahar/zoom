@@ -33,7 +33,7 @@ class VideoCamera(object):
         # try to connect to the camera in a separate thread
         # because it might take some time
         thread = threading.Thread(target=self.connect_to_camera)
-        thread.daemon = True  # so it won't prevent the app from exiting
+        # thread.daemon = True  # so it won't prevent the app from exiting
         thread.start()
 
     def connect_to_camera(self) -> bool:
@@ -101,7 +101,7 @@ class VideoCamera(object):
         # if self.cap and self.cap_lock.acquire(blocking=False):
         #     self.cap.release()
         #     self.cap_lock.release()
-        threading.Thread(target=self.release_cap, daemon=True).start()
+        threading.Thread(target=self.release_cap).start()
         cv2.destroyAllWindows()
 
 

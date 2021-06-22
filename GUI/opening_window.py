@@ -72,7 +72,8 @@ class OpeningWindow(QtWidgets.QWidget):
 
         self.auth_client.recv_client_info_signal.connect(self.recv_client_info)
         self.auth_client.network_error.connect(self.handle_network_error)
-        self.auth_client.invalid_id_error.connect(self.handle_invalid_id_error)
+        self.auth_client.join_meeting_error.connect(
+            self.handle_join_meeting_error)
 
     def name_sign_in(self):
         """ Authenticates the user using its name. """
@@ -137,14 +138,19 @@ class OpeningWindow(QtWidgets.QWidget):
             self.error_label.show()
 
     def handle_network_error(self, details: str):
-        """ Handles network error from the auth client. """
+        """
+        Handles network error from the auth client and exits.
+        """
         self.loading_frame.hide()
-        self.login_frame.show()
         bring_win_to_front(self)
         show_error_window('Network error', details)
+        self.close()
 
-    def handle_invalid_id_error(self, details: str):
-        """ Handles invalid id error from the auth client. """
+    def handle_join_meeting_error(self, details: str):
+        """
+        Handles join meeting error from the auth client and
+        returns to the join meeting frame.
+        """
         self.loading_frame.hide()
         self.join_meeting_frame.show()
         bring_win_to_front(self)
@@ -158,11 +164,14 @@ class OpeningWindow(QtWidgets.QWidget):
         self.main_window.show()
         bring_win_to_front(self.main_window)
 
-    def main_window_closed(self):
+    def main_window_closed(self, success: bool):
         """ This function is called when the main window is closed. """
-        self.show()
-        # initializes a new main window, if the client will join a new meeting
-        self.init_main_window()
+        if success:
+            self.show()
+            # initializes a new main window
+            self.init_main_window()
+        else:
+            self.close()
 
     def closeEvent(self, event: QtGui.QCloseEvent):
         """

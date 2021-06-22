@@ -33,16 +33,20 @@ class AudioStream(object):
                                   frames_per_buffer=AudioStream.CHUNK)
         print('Connected to audio')
         self.lock = threading.Lock()
+        self.is_open = True
 
     def read_chunk(self) -> bytes:
         """ Reads a chunk from the stream. """
         with self.lock:
-            return self.stream.read(AudioStream.CHUNK)
+            if self.is_open:
+                return self.stream.read(AudioStream.CHUNK)
+            return b''
 
     def write(self, data: bytes):
         """ Writes data to the stream. """
         with self.lock:
-            self.stream.write(data)
+            if self.is_open:
+                self.stream.write(data)
 
     def close_stream(self):
         """ Closes the stream (called in a new thread). """
@@ -54,10 +58,11 @@ class AudioStream(object):
             finally:
                 self.stream.close()
                 self.p.terminate()
-                print('The stream was closed.')
+                print(f'Closed stream.')
 
     def close(self):
         """ Closes the stream. """
+        self.is_open = False
         threading.Thread(target=self.close_stream).start()
 
     @staticmethod

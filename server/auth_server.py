@@ -206,7 +206,7 @@ class AuthServer(threading.Thread):
             if len(self.meetings_dict[meeting_id]) == \
                     AuthServer.MAX_CLIENTS_PER_MEETING:
                 return self.error_response('This meeting is full.',
-                                           HTTPStatus.FORBIDDEN)
+                                           HTTPStatus.NOT_FOUND)
             self.meetings_dict[meeting_id].append(client_info.id)
 
         client_info.meeting_id = meeting_id
@@ -230,7 +230,7 @@ class AuthServer(threading.Thread):
             error_resp = self.error_response('Missing required "id" param.')
         elif not AuthServer.is_hex_string(hex_client_id):
             error_resp = self.error_response('Invalid client ID.',
-                                             HTTPStatus.NOT_FOUND)
+                                             HTTPStatus.UNAUTHORIZED)
         else:
             client_id = bytes.fromhex(hex_client_id)
 
@@ -243,7 +243,7 @@ class AuthServer(threading.Thread):
                 client_info = self.authenticated_clients.get(client_id)
             if not client_info:
                 error_resp = self.error_response('Invalid client ID.',
-                                                 HTTPStatus.NOT_FOUND)
+                                                 HTTPStatus.UNAUTHORIZED)
             elif client_info.meeting_id:
                 error_resp = self.error_response(
                     'The client is already in a meeting')
@@ -313,7 +313,10 @@ class AuthServer(threading.Thread):
         client_id = full_client_id[MEETING_ID_LEN:]
 
         with self.authenticated_clients_lock:
-            self.authenticated_clients[client_id].meeting_id = b''
+            # The client_id might not be in self.authenticated_clients
+            # if the logout() function was called before this function.
+            if client_id in self.authenticated_clients:
+                self.authenticated_clients[client_id].meeting_id = b''
 
         with self.meetings_dict_lock:
             self.meetings_dict[meeting_id].remove(client_id)
