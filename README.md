@@ -1,5 +1,4 @@
 # zoom
-Zoom project - still under development...
 
 So far I have made the following features, all of them work between multiple users in multiple meetings:
 - Sign in with google / with your name.
@@ -18,7 +17,7 @@ So far I have made the following features, all of them work between multiple use
 
 ![alt text](screenshots/join_meeting_frame.jpg?raw=true)
 
-![alt text](screenshots/two_users.jpg?raw=true)
+![alt text](screenshots/4users.jpg?raw=true)
 
 ## Setup
 Run the file [setup/setup.bat](setup/setup.bat) which installs all the requirements and 
