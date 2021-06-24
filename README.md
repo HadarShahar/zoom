@@ -13,11 +13,9 @@ So far I have made the following features, all of them work between multiple use
 
 ![alt text](screenshots/opening_window.jpg?raw=true)
 
-![alt text](screenshots/google_login.jpg?raw=true)
-
 ![alt text](screenshots/join_meeting_frame.jpg?raw=true)
 
-![alt text](screenshots/4users.jpg?raw=true)
+![alt text](screenshots/4users.png?raw=true)
 
 ## Setup
 Run the file [setup/setup.bat](setup/setup.bat) which installs all the requirements and 
